@@ -3,12 +3,15 @@ from SimpleSimplification import SimpleSimplification
 from database import DatabaseConnection
 import json
 
+# Database settings
 DATABASE_HOST = "localhost"
 DATABASE_NAME = "gis"
 DATABASE_USER = "postgres"
 DATABASE_PASSWORD = None
 
+# Database table that holds the simplified data
 TABLE_RESULT_NAME = "simplified"
+
 TABLE_RESULT_QUERIES = [f"DROP TABLE IF EXISTS {TABLE_RESULT_NAME};",
                         f"""CREATE TABLE {TABLE_RESULT_NAME}
                         (
@@ -27,18 +30,19 @@ EXTRACT_BUNDESLAENDER = ExtractionRule("admin_level='4'")
 
 
 def main():
+    # Connect to database
     print(f"Connecting to database \"{DATABASE_NAME}\" at \"{DATABASE_HOST}\" as user \"{DATABASE_USER}\"...")
-    gisDB = DatabaseConnection(host=DATABASE_HOST, database=DATABASE_NAME, user=DATABASE_USER,
-                               password=DATABASE_PASSWORD)
+    database = DatabaseConnection(host=DATABASE_HOST, database=DATABASE_NAME, user=DATABASE_USER,
+                                  password=DATABASE_PASSWORD)
     print("Successfully connected")
 
     print(f"Preparing table \"{TABLE_RESULT_NAME}\"...")
-    createResultTable(gisDB)
+    createResultTable(database)
     print(f"Table prepared")
 
     # Extract Bundeslaender from database
     print("Extracting bundeslaender...")
-    result = EXTRACT_BUNDESLAENDER.extract(gisDB)
+    result = EXTRACT_BUNDESLAENDER.extract(database)
     print(f"Extracted {len(result)} geometries")
 
     print("Proceeding with simplification...")
@@ -46,12 +50,12 @@ def main():
     for zoom in ZOOM_RANGE:
         # Simplify the result for the current zoom level
         simplified = SIMPLIFICATION.simplify(constraint_points=[], geometries=result, zoom=zoom)
-        writeGeometries(gisDB, simplified, zoom)
+        writeGeometries(database, simplified, zoom)
 
     print("Simplification finished")
     print("Everything done.")
 
-    gisDB.disconnect()
+    database.disconnect()
 
 
 def writeGeometries(database, geometries, zoom):
