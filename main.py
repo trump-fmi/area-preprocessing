@@ -18,6 +18,7 @@ TABLE_RESULT_QUERIES = [f"DROP TABLE IF EXISTS {TABLE_RESULT_NAME};",
                             type VARCHAR DEFAULT NULL,
                             CONSTRAINT unique_id UNIQUE (id, zoom)
                         );""",
+                        f"CREATE INDEX geom_index ON {TABLE_RESULT_NAME} USING GIST(geom)"
                         f"CREATE INDEX zoom_index ON {TABLE_RESULT_NAME} (zoom);"]
 
 ZOOM_RANGE = range(0, 19)  # default OSM: range(0,19)
