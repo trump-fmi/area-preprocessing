@@ -26,7 +26,7 @@ TABLE_RESULT_QUERIES = [f"DROP TABLE IF EXISTS {TABLE_RESULT_NAME};",
 
 ZOOM_RANGE = range(0, 19)  # default OSM: range(0,19)
 SIMPLIFICATION = SimpleSimplification()
-EXTRACT_BUNDESLAENDER = ExtractionRule("admin_level='4'")
+EXTRACT_BUNDESLAENDER = ExtractionRule("admin_level='8'")
 
 
 def main():
