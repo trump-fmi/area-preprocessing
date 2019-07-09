@@ -18,10 +18,10 @@ TABLE_RESULT_QUERIES = [f"DROP TABLE IF EXISTS {TABLE_RESULT_NAME};",
                             id INT NOT NULL,
                             geom GEOMETRY NOT NULL,
                             zoom INT DEFAULT 0,
-                            type VARCHAR DEFAULT NULL,
+                            geojson TEXT DEFAULT NULL,
                             CONSTRAINT unique_id UNIQUE (id, zoom)
                         );""",
-                        f"CREATE INDEX geom_index ON {TABLE_RESULT_NAME} USING GIST(geom)"
+                        f"CREATE INDEX geom_index ON {TABLE_RESULT_NAME} USING GIST(geom);",
                         f"CREATE INDEX zoom_index ON {TABLE_RESULT_NAME} (zoom);"]
 
 ZOOM_RANGE = range(0, 19)  # default OSM: range(0,19)
@@ -40,7 +40,7 @@ def main():
     createResultTable(database)
     print(f"Table prepared")
 
-    # Extract Bundeslaender from database
+    # Extract bundeslaender from database
     print("Extracting bundeslaender...")
     result = EXTRACT_BUNDESLAENDER.extract(database)
     print(f"Extracted {len(result)} geometries")
@@ -68,8 +68,8 @@ def writeGeometries(database, geometries, zoom):
             }
         }
         geoJSON = json.dumps(geometry)
-        database.query(f"""INSERT INTO {TABLE_RESULT_NAME} (id, geom, zoom, type)
-        VALUES ({id}, ST_GeomFromGeoJSON('{geoJSON}'), {zoom}, 'bundesland')""")
+        database.query(f"""INSERT INTO {TABLE_RESULT_NAME} (id, geom, zoom, geojson)
+        VALUES ({id}, ST_GeomFromGeoJSON('{geoJSON}'), {zoom}, '{geoJSON}')""")
 
 
 def createResultTable(database):

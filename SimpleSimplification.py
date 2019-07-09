@@ -75,10 +75,10 @@ class SimpleSimplification(Simplification):
 
     def removeCoordinates(self, coordinates, zoom):
         # Do nothing of zoom level is greater than 13
-        if int(zoom) >= 13:
+        if int(zoom) >= 14:
             return
 
-        n = zoom - 3
+        n = zoom - 4
         if n < 1:
             n = 1
 

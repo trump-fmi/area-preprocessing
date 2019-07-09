@@ -14,6 +14,8 @@ class ExtractionRule:
         # Iterate over all point tables
         for table in TABLES_LINES:
 
+            print(f"Extracting from table \"{table}\"...")
+
             # Build query
             query = f"SELECT osm_id, ST_AsGEOJSON(ST_Transform(ST_ForceRHR(way), {TARGET_PROJECTION})) FROM {table} WHERE {self.conditions}"
 
