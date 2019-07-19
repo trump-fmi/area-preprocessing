@@ -1,9 +1,5 @@
 import copy
-
-import math
-
 from Simplification import Simplification
-from simplification.cutil import simplify_coords
 
 # Threshold for starting the simplification
 SIMPLIFICATION_FACTOR = 0.5

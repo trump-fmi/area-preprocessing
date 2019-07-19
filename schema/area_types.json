@@ -1,0 +1,18 @@
+{
+  "types": [
+    {
+      "name": "Woodland",
+      "resource": "woodland",
+      "table_name": "woodland",
+      "geometries": [
+        "lines",
+        "polygons"
+      ],
+      "filter_condition": "\"natural\"='wood' OR \"landuse\"='forest'",
+      "labels": true,
+      "simplification": true,
+      "zoom_min": 10,
+      "zoom_max": 19
+    }
+  ]
+}
