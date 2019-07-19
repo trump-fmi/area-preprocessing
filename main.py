@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from ExtractionRule import ExtractionRule
 from SimpleSimplification import SimpleSimplification
 from database import DatabaseConnection
