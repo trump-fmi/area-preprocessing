@@ -53,6 +53,9 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 # Simplification algorithm to use
 SIMPLIFICATION = SimpleSimplification()
 
+WRITE_BATCH_SIZE = 20
+
+# Database instance
 database = None
 
 
@@ -128,12 +131,10 @@ def extractAreaType(area_type):
 def writeGeometries(table_name, geometries, zoom):
     global database
 
-    CHUNK_SIZE = 100
-
     geometry_items = list(geometries.items())
 
-    for i in range(0, len(geometry_items), CHUNK_SIZE):
-        chunk_list = geometry_items[i:i + CHUNK_SIZE]
+    for i in range(0, len(geometry_items), WRITE_BATCH_SIZE):
+        chunk_list = geometry_items[i:i + WRITE_BATCH_SIZE]
 
         queryValues = []
 
