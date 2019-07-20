@@ -4,6 +4,7 @@ from SimpleSimplification import SimpleSimplification
 from database import DatabaseConnection
 import json
 from jsonschema import validate
+import gc
 
 # Paths for area types JSON schema and document files
 AREA_TYPES_DOCUMENT_FILE = "schema/area_types.json"
@@ -156,6 +157,12 @@ def writeGeometries(table_name, geometries, zoom):
 
         # Insert into database
         database.query(queryString)
+
+        # Try to release memory (probably useless)
+        chunk_list = None
+        queryValues = None
+        queryString = None
+        gc.collect()
 
 
 def createResultTable(database, table_name):
