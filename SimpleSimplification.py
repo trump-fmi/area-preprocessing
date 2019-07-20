@@ -1,24 +1,18 @@
 import copy
 from Simplification import Simplification
 
-# Threshold for starting the simplification
-SIMPLIFICATION_FACTOR = 0.5
-
 
 class SimpleSimplification(Simplification):
     def __init__(self):
         pass
 
     def simplify(self, constraint_points, geometries, zoom):
-        # Copy all geometries for working on them
-        geometries_copy = copy.deepcopy(geometries)
-
         geometries_count = 0
         points_count = 0
         simplified_points_count = 0
 
         # Iterate over all geometries
-        for geoIndex, geometry in geometries_copy.items():
+        for geoIndex, geometry in geometries.items():
 
             # Geometry is a line string
             if geometry['type'] == 'LineString':
@@ -30,7 +24,7 @@ class SimpleSimplification(Simplification):
 
                 # Apply simplification
                 self.removeCoordinates(coordinates, zoom)
-                geometries_copy[geoIndex]['coordinates'] = coordinates
+                geometries[geoIndex]['coordinates'] = coordinates
 
                 # Count stats
                 simplified_points_count += len(coordinates)
@@ -47,13 +41,29 @@ class SimpleSimplification(Simplification):
 
                     # Apply simplification
                     self.removeCoordinates(ringCoordinates, zoom)
-                    geometries_copy[geoIndex]['coordinates'][ringIndex] = ringCoordinates
+                    geometries[geoIndex]['coordinates'][ringIndex] = ringCoordinates
 
                     # Count stats
                     simplified_points_count += len(ringCoordinates)
-            else:
-                raise Exception("Invalid geometry type")
+            elif geometry['type'] == 'MultiPolygon':
+                polygon_list = geometry['coordinates']
 
+                for polygonIndex, line_rings in enumerate(polygon_list):
+                    # Iterate over all contained line rings
+                    for ringIndex, ringCoordinates in enumerate(line_rings):
+                        # Count stats
+                        geometries_count += 1
+                        points_count += len(ringCoordinates)
+
+                        # Apply simplification
+                        self.removeCoordinates(ringCoordinates, zoom)
+                        geometries[geoIndex]['coordinates'][polygonIndex][ringIndex] = ringCoordinates
+
+                        # Count stats
+                        simplified_points_count += len(ringCoordinates)
+            else:
+                print(f"Other geometry: {geometry['type']}")
+                # raise Exception("Invalid geometry type")
 
         # Output stats
         print(f"---------- Zoom: {zoom} ----------")
@@ -62,19 +72,17 @@ class SimpleSimplification(Simplification):
         print(f"Remaining points: {simplified_points_count}")
         print(f"Total points per geometry:  {points_count / geometries_count}")
         print(f"Remaining points per geometry:  {simplified_points_count / geometries_count}")
-        print(f"Compression rate: {(points_count - simplified_points_count) / points_count}")
         print("----------------------------------")
         print()
 
-        return geometries_copy
-
+        return geometries
 
     def removeCoordinates(self, coordinates, zoom):
-        # Do nothing of zoom level is greater than 13
-        if int(zoom) >= 14:
+        # Do nothing of zoom level is 18 or greater
+        if int(zoom) >= 18:
             return
 
-        n = zoom - 4
+        n = zoom - 5
         if n < 1:
             n = 1
 

@@ -1,23 +1,22 @@
 import json
 
 TARGET_PROJECTION = 4326
-TABLES_LINES = ['planet_osm_line', 'planet_osm_polygon']
 
 class ExtractionRule:
     def __init__(self, conditions):
         self.conditions = conditions
 
-    def extract(self, database):
+    def extract(self, database, source_tables):
         # Dict for all extracted geometries
         geometriesDict = {}
 
         # Iterate over all point tables
-        for table in TABLES_LINES:
+        for table in source_tables:
 
             print(f"Extracting from table \"{table}\"...")
 
             # Build query
-            query = f"SELECT osm_id, ST_AsGEOJSON(ST_Transform(ST_ForceRHR(way), {TARGET_PROJECTION})) FROM {table} WHERE {self.conditions}"
+            query = f"SELECT osm_id, ST_AsGEOJSON(ST_Transform(way, {TARGET_PROJECTION})) FROM {table} WHERE {self.conditions}"
 
             # Execute query
             result = database.queryForResult(query)

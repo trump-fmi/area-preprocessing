@@ -15,6 +15,13 @@ DATABASE_NAME = "gis"
 DATABASE_USER = "postgres"
 DATABASE_PASSWORD = None
 
+# Maps geometry types to source tables in the database
+SOURCE_TABLES = {
+    "nodes": "planet_osm_point",
+    "lines": "planet_osm_line",
+    "polygons": "planet_osm_polygon"
+}
+
 # JSON key names of the area type definition
 JSON_KEY_TYPES_LIST = "types"
 JSON_KEY_TYPE_NAME = "name"
@@ -37,10 +44,11 @@ RESULT_TABLE_QUERIES = ["DROP TABLE IF EXISTS {0};",
                             CONSTRAINT {0}_unique_id UNIQUE (id, zoom)
                         );""",
                         "CREATE INDEX {0}_geom_index ON {0} USING GIST(geom);",
-                        "CREATE INDEX {0}_zoom_index ON {0} (zoom);"]
+                        "CREATE INDEX {0}_zoom_index ON {0} (zoom);"
+                        "CLUSTER {0}_geom_index ON {0};"]
 
 # Supported zoom range
-ZOOM_RANGE = range(0, 19)  # OSM default: range(0,19)
+ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
 SIMPLIFICATION = SimpleSimplification()
@@ -73,33 +81,37 @@ def main():
 def extractAreaType(area_type):
     global database
 
-    name = area_type[JSON_KEY_TYPE_NAME]
+    # Extract properties of interest from area types definition
+    name = str(area_type[JSON_KEY_TYPE_NAME])
+    table_name = str(area_type[JSON_KEY_TYPE_TABLE_NAME])
+    geometry_list = map(SOURCE_TABLES.get, area_type[JSON_KEY_TYPE_GEOMETRY_LIST])
+    conditions = str(area_type[JSON_KEY_TYPE_CONDITIONS])
+    extract_labels = bool(area_type[JSON_KEY_TYPE_LABELS])
+    simplify_geometries = bool(area_type[JSON_KEY_TYPE_SIMPLIFICATION])
+    zoom_min = float(area_type[JSON_KEY_TYPE_ZOOM_MIN])
+    zoom_max = float(area_type[JSON_KEY_TYPE_ZOOM_MAX])
+
     print(f"Next area type: \"{name}\"")
 
-    table_name = area_type[JSON_KEY_TYPE_TABLE_NAME]
     print(f"Preparing table \"{table_name}\"...")
     createResultTable(database, table_name)
     print(f"Table prepared")
 
     # Create extraction rule
     print("Extracting geometries:")
-    conditions = area_type[JSON_KEY_TYPE_CONDITIONS]
     extraction_rule = ExtractionRule(conditions)
-    result = extraction_rule.extract(database)
+    result = extraction_rule.extract(database, geometry_list)
     print(f"Extracted {len(result)} geometries")
 
     print("Preprocessing data...")
 
-    do_simplification = area_type[JSON_KEY_TYPE_SIMPLIFICATION]
-    zoom_min = area_type[JSON_KEY_TYPE_ZOOM_MIN]
-    zoom_max = area_type[JSON_KEY_TYPE_ZOOM_MAX]
-
-    zoom_range = range(zoom_min, zoom_max)
-
     # Iterate over all desired zoom levels
-    for zoom in zoom_range:
+    for zoom in ZOOM_RANGE:
+        # Check if zoom is within zoom range for this area type
+        if (zoom < zoom_min) or (zoom >= zoom_max): continue
+
         # Check if simplification is desired
-        if do_simplification:
+        if simplify_geometries:
             processed_result = SIMPLIFICATION.simplify(constraint_points=[], geometries=result, zoom=zoom)
         else:
             processed_result = result
@@ -107,7 +119,7 @@ def extractAreaType(area_type):
         # Write result to database
         writeGeometries(table_name, processed_result, zoom)
 
-    print("Finished area type \"{name}\"")
+    print(f"Finished area type \"{name}\"")
 
 
 def writeGeometries(table_name, geometries, zoom):
