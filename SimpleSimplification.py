@@ -78,8 +78,8 @@ class SimpleSimplification(Simplification):
         return geometries
 
     def removeCoordinates(self, coordinates, zoom):
-        # Do nothing of zoom level is 18 or greater
-        if int(zoom) >= 18:
+        # Do nothing of zoom level is 19 or greater
+        if int(zoom) >= 19:
             return
 
         n = zoom - 5

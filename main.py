@@ -126,6 +126,9 @@ def extractAreaType(area_type):
         print(f"Writing simplified geometries for zoom level {zoom} to database...")
         writeGeometries(table_name, processed_result, zoom)
 
+        # Force garbage collection
+        gc.collect()
+
     print(f"Finished area type \"{name}\"")
 
 
@@ -157,12 +160,6 @@ def writeGeometries(table_name, geometries, zoom):
 
         # Insert into database
         database.query(queryString)
-
-        # Try to release memory (probably useless)
-        chunk_list = None
-        queryValues = None
-        queryString = None
-        gc.collect()
 
 
 def createResultTable(database, table_name):
