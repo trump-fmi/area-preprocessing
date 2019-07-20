@@ -108,7 +108,9 @@ def extractAreaType(area_type):
     # Iterate over all desired zoom levels
     for zoom in ZOOM_RANGE:
         # Check if zoom is within zoom range for this area type
-        if (zoom < zoom_min) or (zoom >= zoom_max): continue
+        if (zoom <= zoom_min) or (zoom > zoom_max): continue
+
+        print(f"Simplifying geometries for zoom level {zoom}...")
 
         # Check if simplification is desired
         if simplify_geometries:
@@ -117,6 +119,7 @@ def extractAreaType(area_type):
             processed_result = result
 
         # Write result to database
+        print(f"Writing simplified geometries for zoom level {zoom} to database...")
         writeGeometries(table_name, processed_result, zoom)
 
     print(f"Finished area type \"{name}\"")
@@ -125,17 +128,33 @@ def extractAreaType(area_type):
 def writeGeometries(table_name, geometries, zoom):
     global database
 
-    for id, geometry in geometries.items():
-        # Extend geometry for SRID
-        geometry['crs'] = {
-            'type': 'name',
-            'properties': {
-                'name': "EPSG:4326"
+    CHUNK_SIZE = 100
+
+    geometry_items = list(geometries.items())
+
+    for i in range(0, len(geometry_items), CHUNK_SIZE):
+        chunk_list = geometry_items[i:i + CHUNK_SIZE]
+
+        queryValues = []
+
+        for id, geometry in chunk_list:
+            # Extend geometry for SRID
+            geometry['crs'] = {
+                'type': 'name',
+                'properties': {
+                    'name': "EPSG:4326"
+                }
             }
-        }
-        geoJSON = json.dumps(geometry)
-        database.query(f"""INSERT INTO {table_name} (id, geom, zoom, geojson)
-        VALUES ({id}, ST_GeomFromGeoJSON('{geoJSON}'), {zoom}, '{geoJSON}')""")
+            geoJSON = json.dumps(geometry)
+
+            value = f"({id}, ST_GeomFromGeoJSON('{geoJSON}'), {zoom}, '{geoJSON}')"
+            queryValues.append(value)
+
+        # Build query string
+        queryString = f"INSERT INTO {table_name} (id, geom, zoom, geojson) VALUES " + (",".join(queryValues)) + ";"
+
+        # Insert into database
+        database.query(queryString)
 
 
 def createResultTable(database, table_name):
