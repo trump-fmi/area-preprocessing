@@ -18,6 +18,7 @@ class DatabaseConnection:
         except:
             print(f"Failed query: {query}")
             self.disconnect()
+            exit(-1)
 
     def queryForResult(self, query):
         self.cursor.execute(query)
