@@ -41,10 +41,14 @@ class SimpleSimplification(Simplification):
 
                     # Apply simplification
                     self.removeCoordinates(ringCoordinates, zoom)
-                    geometries[geoIndex]['coordinates'][ringIndex] = ringCoordinates
+
+                    line_rings[ringIndex] = ringCoordinates
 
                     # Count stats
                     simplified_points_count += len(ringCoordinates)
+
+                line_rings[:] = [ring for ring in line_rings if len(ring) > 1]
+
             elif geometry['type'] == 'MultiPolygon':
                 polygon_list = geometry['coordinates']
 
@@ -57,10 +61,12 @@ class SimpleSimplification(Simplification):
 
                         # Apply simplification
                         self.removeCoordinates(ringCoordinates, zoom)
-                        geometries[geoIndex]['coordinates'][polygonIndex][ringIndex] = ringCoordinates
+                        polygon_list[polygonIndex][ringIndex] = ringCoordinates
 
                         # Count stats
                         simplified_points_count += len(ringCoordinates)
+
+                    polygon_list[polygonIndex][:] = [ring for ring in polygon_list[polygonIndex] if len(ring) > 1]
             else:
                 print(f"Other geometry: {geometry['type']}")
                 # raise Exception("Invalid geometry type")

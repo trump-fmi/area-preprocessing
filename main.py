@@ -54,7 +54,7 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 # Simplification algorithm to use
 SIMPLIFICATION = SimpleSimplification()
 
-WRITE_BATCH_SIZE = 5
+WRITE_BATCH_SIZE = 50
 
 # Database instance
 database = None
@@ -152,7 +152,7 @@ def writeGeometries(table_name, geometries, zoom):
             }
             geoJSON = json.dumps(geometry)
 
-            value = f"({id}, ST_GeomFromGeoJSON('{geoJSON}'), {zoom}, '{geoJSON}')"
+            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geoJSON}')), {zoom}, '{geoJSON}')"
             queryValues.append(value)
 
         # Build query string
