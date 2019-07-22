@@ -1,6 +1,20 @@
 {
   "types": [
     {
+      "name": "Towns",
+      "resource": "towns",
+      "table_name": "towns",
+      "geometries": [
+        "lines",
+        "polygons"
+      ],
+      "filter_condition": "\"admin_level\"='8'",
+      "labels": false,
+      "simplification": true,
+      "zoom_min": 9,
+      "zoom_max": 17
+    },
+    {
       "name": "Woodland",
       "resource": "woodland",
       "table_name": "woodland",
@@ -11,7 +25,7 @@
       "filter_condition": "\"natural\"='wood' OR \"landuse\"='forest'",
       "labels": true,
       "simplification": true,
-      "zoom_min": 6,
+      "zoom_min": 7,
       "zoom_max": 19
     }
   ]

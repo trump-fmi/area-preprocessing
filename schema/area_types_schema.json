@@ -3,7 +3,7 @@
   "$schema": "http://json-schema.org/schema#",
   "$id": "https://github.com/trump-fmi/area-types-schema",
   "type": "object",
-  "title": "Area Types Schema",
+  "title": "Area types schema",
   "required": [
     "types"
   ],
@@ -18,7 +18,7 @@
       "items": {
         "$id": "#/properties/types/items",
         "type": "object",
-        "title": "The Items Schema",
+        "title": "Area types",
         "required": [
           "name",
           "resource",
@@ -93,17 +93,19 @@
             "$id": "#/properties/types/items/properties/zoom_min",
             "type": "integer",
             "title": "Minimum zoom level",
-            "description": "Minimum zoom value (exclusive) for which areas of this type are supposed to be displayed",
+            "description": "Minimum zoom value (inclusive) for which areas of this type are supposed to be displayed",
             "minimum": 0.0,
-            "maximum": 19.0
+            "maximum": 19.0,
+            "default": 0.0
           },
           "zoom_max": {
             "$id": "#/properties/types/items/properties/zoom_max",
             "type": "integer",
             "title": "Maximum zoom level",
-            "description": "Maximum zoom value (inclusive) until which areas of this type are supposed to be displayed",
+            "description": "Maximum zoom value (inclusive) for which areas of this type are supposed to be displayed",
             "minimum": 0.0,
-            "maximum": 19.0
+            "maximum": 19.0,
+            "default": 19.0
           }
         }
       }

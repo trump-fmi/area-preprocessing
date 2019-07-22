@@ -6,7 +6,7 @@ import json
 from jsonschema import validate
 import gc
 
-# Paths for area types JSON schema and document files
+# File paths for area types JSON schema and document files
 AREA_TYPES_DOCUMENT_FILE = "schema/area_types.json"
 AREA_TYPES_SCHEMA_FILE = "schema/area_types_schema.json"
 
@@ -23,7 +23,7 @@ SOURCE_TABLES = {
     "polygons": "planet_osm_polygon"
 }
 
-# JSON key names of the area type definition
+# JSON key names of the area types definition
 JSON_KEY_TYPES_LIST = "types"
 JSON_KEY_TYPE_NAME = "name"
 JSON_KEY_TYPE_TABLE_NAME = "table_name"
@@ -112,7 +112,7 @@ def extractAreaType(area_type):
     # Iterate over all desired zoom levels
     for zoom in ZOOM_RANGE:
         # Check if zoom is within zoom range for this area type
-        if (zoom <= zoom_min) or (zoom > zoom_max): continue
+        if (zoom < zoom_min) or (zoom > zoom_max): continue
 
         print(f"Simplifying geometries for zoom level {zoom}...")
 
