@@ -112,7 +112,7 @@ def extractAreaType(area_type):
     # Iterate over all desired zoom levels
     for zoom in ZOOM_RANGE:
         # Check if zoom is within zoom range for this area type
-        if (zoom < zoom_min) or (zoom > zoom_max): continue
+        if (zoom < zoom_min) or (zoom >= zoom_max): continue
 
         print(f"Simplifying geometries for zoom level {zoom}...")
 
