@@ -35,12 +35,10 @@ class ExtractionRule:
                 name = row[1]
                 geoJSON = row[2]
 
-                # Add name to name dict if available
+                # Add sanitized name to name dict if available
                 if name is not None:
+                    name = name.replace("'", "")
                     names_dict[id] = name
-
-                if id in geometries_dict:
-                    print("duplicate!")
 
                 # Convert JSON geometry to object
                 geoObject = json.loads(geoJSON)

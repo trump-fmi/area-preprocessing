@@ -55,7 +55,7 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 # Simplification algorithm to use
 SIMPLIFICATION = SimpleSimplification()
 
-WRITE_BATCH_SIZE = 5
+WRITE_BATCH_SIZE = 100
 
 # Database instance
 database = None
