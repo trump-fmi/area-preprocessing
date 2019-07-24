@@ -1,8 +1,7 @@
-import copy
 from Simplification import Simplification
 
 
-class SimpleSimplification(Simplification):
+class BlackBoxSimplification(Simplification):
     def __init__(self):
         pass
 
@@ -34,7 +33,7 @@ class SimpleSimplification(Simplification):
                 line_strings = geometry['coordinates']
 
                 for line_index, line_coordinates in enumerate(line_strings):
-                    # Count stats
+                  # Count stats
                     geometries_count += 1
                     points_count += len(line_coordinates)
 
@@ -101,17 +100,12 @@ class SimpleSimplification(Simplification):
 
         return geometries
 
-    def removeCoordinates(self, coordinates, zoom):
-        # Do nothing of zoom level is 19 or greater
-        if int(zoom) >= 19:
-            return
 
-        n = zoom - 5
-        if n < 1:
-            n = 1
 
-        # Iterate over all available coordinates
-        for index, coordinate in enumerate(coordinates):
-            # Remove every n-th coordinate
-            if index % n == 0:
-                coordinates.pop(index)
+    def blackBox(self, constraints, coordinates):
+        # use something like the prototype here
+
+
+
+    def getConstraints(self, zoom):
+        # figure out how to do this
