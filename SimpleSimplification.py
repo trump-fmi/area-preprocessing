@@ -45,6 +45,8 @@ class SimpleSimplification(Simplification):
                     # Count stats
                     simplified_points_count += len(line_coordinates)
 
+                line_strings[:] = [line for line in line_strings if len(line) > 1]
+
             # Geometry is a polygon
             elif geometry['type'] == 'Polygon':
                 line_rings = geometry['coordinates']
