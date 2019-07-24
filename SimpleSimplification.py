@@ -29,6 +29,22 @@ class SimpleSimplification(Simplification):
                 # Count stats
                 simplified_points_count += len(coordinates)
 
+            # Geometry is a multi line string
+            elif geometry['type'] == 'MultiLineString':
+                line_strings = geometry['coordinates']
+
+                for line_index, line_coordinates in enumerate(line_strings):
+                    # Count stats
+                    geometries_count += 1
+                    points_count += len(line_coordinates)
+
+                    # Apply simplification
+                    self.removeCoordinates(line_coordinates, zoom)
+                    line_strings[line_index] = line_coordinates
+
+                    # Count stats
+                    simplified_points_count += len(line_coordinates)
+
             # Geometry is a polygon
             elif geometry['type'] == 'Polygon':
                 line_rings = geometry['coordinates']

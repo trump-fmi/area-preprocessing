@@ -41,6 +41,7 @@ RESULT_TABLE_QUERIES = ["DROP TABLE IF EXISTS {0};",
                             id INT NOT NULL,
                             geom GEOMETRY NOT NULL,
                             zoom INT DEFAULT 0,
+                            name TEXT DEFAULT NULL,
                             geojson TEXT DEFAULT NULL,
                             CONSTRAINT {0}_unique_id UNIQUE (id, zoom)
                         );""",
@@ -101,11 +102,11 @@ def extractAreaType(area_type):
     createResultTable(database, table_name)
     print(f"Table prepared")
 
-    # Create extraction rule
+    # Create extraction rule and use it to extract geometries and names
     print("Extracting geometries:")
     extraction_rule = ExtractionRule(conditions)
-    result = extraction_rule.extract(database, geometry_list)
-    print(f"Extracted {len(result)} geometries")
+    geometries_dict, names_dict = extraction_rule.extract(database, geometry_list)
+    print(f"Extracted {len(geometries_dict)} geometries and {len(names_dict)} names")
 
     print("Preprocessing data...")
 
@@ -118,13 +119,13 @@ def extractAreaType(area_type):
 
         # Check if simplification is desired
         if simplify_geometries:
-            processed_result = SIMPLIFICATION.simplify(constraint_points=[], geometries=result, zoom=zoom)
+            processed_result = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom)
         else:
-            processed_result = result
+            processed_result = geometries_dict
 
         # Write result to database
         print(f"Writing simplified geometries for zoom level {zoom} to database...")
-        writeGeometries(table_name, processed_result, zoom)
+        write_geometries(table_name, processed_result, names_dict, zoom)
 
         # Force garbage collection
         gc.collect()
@@ -132,7 +133,7 @@ def extractAreaType(area_type):
     print(f"Finished area type \"{name}\"")
 
 
-def writeGeometries(table_name, geometries, zoom):
+def write_geometries(table_name, geometries, names, zoom):
     global database
 
     geometry_items = list(geometries.items())
@@ -152,11 +153,16 @@ def writeGeometries(table_name, geometries, zoom):
             }
             geoJSON = json.dumps(geometry)
 
-            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geoJSON}')), {zoom}, '{geoJSON}')"
+            # Check if name available
+            name = "NULL"
+            if id in names:
+                name = "'" + names[id] + "'"
+
+            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geoJSON}')), {zoom}, {name}, '{geoJSON}')"
             queryValues.append(value)
 
         # Build query string
-        queryString = f"INSERT INTO {table_name} (id, geom, zoom, geojson) VALUES " + (",".join(queryValues)) + ";"
+        queryString = f"INSERT INTO {table_name} (id, geom, zoom, name, geojson) VALUES " + (",".join(queryValues)) + ";"
 
         # Insert into database
         database.query(queryString)
