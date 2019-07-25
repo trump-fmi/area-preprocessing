@@ -20,7 +20,7 @@ class ExtractionRule:
             print(f"Extracting from table \"{table}\"...")
 
             # Build query
-            query = f"SELECT osm_id, ST_AsGEOJSON(ST_Transform(way, {TARGET_PROJECTION})) FROM {table} WHERE {self.conditions}"
+            query = f"SELECT osm_id, name, ST_AsGEOJSON(ST_Transform(way, {TARGET_PROJECTION})) FROM {table} WHERE {self.conditions}"
 
             # Execute query
             result = database.queryForResult(query)
