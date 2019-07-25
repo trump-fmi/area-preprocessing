@@ -11,7 +11,7 @@ AREA_TYPES_DOCUMENT_FILE = "../area-types/area_types.json"
 AREA_TYPES_SCHEMA_FILE = "../area-types/area_types_schema.json"
 
 # Database settings
-DATABASE_HOST = "localhost"
+DATABASE_HOST = ""
 DATABASE_NAME = "gis"
 DATABASE_USER = "postgres"
 DATABASE_PASSWORD = None
