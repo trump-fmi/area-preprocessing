@@ -37,7 +37,7 @@ class ExtractionRule:
 
                 # Add sanitized name to name dict if available
                 if name is not None:
-                    name = name.replace("'", "")
+                    name = name.replace("'", "").replace("\"", "").replace("\n", "")
                     names_dict[id] = name
 
                 # Convert JSON geometry to object
