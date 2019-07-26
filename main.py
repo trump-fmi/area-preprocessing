@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from ExtractionRule import ExtractionRule
+from NoSimplification import NoSimplification
 from SimpleSimplification import SimpleSimplification
 from database import DatabaseConnection
 import json
@@ -53,7 +54,8 @@ RESULT_TABLE_QUERIES = ["DROP TABLE IF EXISTS {0};",
 ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
-SIMPLIFICATION = SimpleSimplification()
+# SIMPLIFICATION = SimpleSimplification()
+SIMPLIFICATION = NoSimplification()
 
 WRITE_BATCH_SIZE = 100
 
