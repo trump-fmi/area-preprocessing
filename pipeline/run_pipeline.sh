@@ -12,7 +12,6 @@ temp_filtered="filtered.osm"
 
 # Switch into pipeline directory
 cd "${0%/*}"
-cd "pipeline"
 
 # Store command line parameters
 input_file="$1"
