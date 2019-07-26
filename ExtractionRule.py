@@ -1,50 +1,81 @@
+import os
 import json
 
+# ********** Config **********
+PIPELINE_DIR = "pipeline"
+PIPELINE_SCRIPT_NAME = "run_pipeline.sh"
+INPUT_FILE_PATH = "../../bw_data.pbf"
+OUTPUT_FILE_NAME = "result.json"
+GEOMETRIES_WHITELIST = ["LineString", "MultiLineString", "Polygon", "MultiPolygon"]
 TARGET_PROJECTION = 4326
+# ****************************
 
 
 class ExtractionRule:
-    def __init__(self, conditions):
-        self.conditions = conditions
+    def __init__(self, filter_parameters):
+        self.filter_parameters = filter_parameters
 
-    def extract(self, database, source_tables):
+    def extract(self):
         # Dict for all extracted geometries
         geometries_dict = {}
 
         # Dict for all extracted names
         names_dict = {}
 
-        # Iterate over all point tables
-        for table in source_tables:
+        # Build pipeline script call with parameters
+        script_path = os.path.join(PIPELINE_DIR, PIPELINE_SCRIPT_NAME)
+        script_call = script_path + f" \"{INPUT_FILE_PATH}\" \"{OUTPUT_FILE_NAME}\" {self.filter_parameters}"
 
-            print(f"Extracting from table \"{table}\"...")
+        # Execute script
+        return_value = os.system(script_call)
 
-            # Build query
-            query = f"SELECT osm_id, name, ST_AsGEOJSON(ST_Transform(way, {TARGET_PROJECTION})) FROM {table} WHERE {self.conditions}"
+        if return_value != 0:
+            print("Error: Pipeline script execution failed.")
+            exit(-1)
 
-            # Execute query
-            result = database.queryForResult(query)
+        # Read in extracted GeoJSON data
+        output_file_path = os.path.join(PIPELINE_DIR, OUTPUT_FILE_NAME)
+        with open(output_file_path) as json_file:
+            extracted_features = json.load(json_file)["features"]
 
-            # Iterate over all result rows
-            for row in result:
-                # Sanity check
-                if len(row) < 1: continue
+        # Sanity check
+        if extracted_features is None:
+            print("Error: Reading pipeline output file failed.")
+            exit(-1)
 
-                # Extract relevant data from query result
-                id = row[0]
-                name = row[1]
-                geoJSON = row[2]
+        # Iterate over all extracted features
+        for feature in extracted_features:
 
-                # Add sanitized name to name dict if available
-                if name is not None:
-                    name = name.replace("'", "").replace("\"", "").replace("\n", "")
-                    names_dict[id] = name
+            # Get feature id and extract number
+            id = feature["id"]
+            id = id.split("/", 1)[1]
 
-                # Convert JSON geometry to object
-                geoObject = json.loads(geoJSON)
+            # Get feature geometry
+            geometry = feature["geometry"]
 
-                # Add geometry to geometry dict
-                geometries_dict[id] = geoObject
+            # Get geometry type
+            geometry_type = geometry["type"]
+
+            # Compare geometry type with whitelist
+            if not geometry_type in GEOMETRIES_WHITELIST:
+                continue
+
+            # Get feature name if available
+            name = None
+            if "properties" in feature:
+                if "name" in feature["properties"]:
+                    name = feature["properties"]["name"]
+
+            # If available, add sanitized name to name dict
+            if name is not None:
+                name = name.replace("'", "").replace("\"", "").replace("\n", "")
+                names_dict[id] = name
+
+            if id in geometries_dict:
+                print("DUPLICATE!!!!!!!!!!!!!!!!!!!!!")
+
+            # Add geometry to geometry dict
+            geometries_dict[id] = geometry
 
         # Return resulting list of geometries
         return geometries_dict, names_dict
