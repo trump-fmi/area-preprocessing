@@ -4,7 +4,7 @@ import json
 # ********** Config **********
 PIPELINE_DIR = "pipeline"
 PIPELINE_SCRIPT_NAME = "run_pipeline.sh"
-INPUT_FILE_PATH = "../../bw_data.pbf"
+INPUT_FILE_PATH = "../../germany-latest.osm.pbf"
 OUTPUT_FILE_NAME = "result.json"
 GEOMETRIES_WHITELIST = ["LineString", "MultiLineString", "Polygon", "MultiPolygon"]
 TARGET_PROJECTION = 4326
