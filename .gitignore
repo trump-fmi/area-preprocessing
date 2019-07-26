@@ -107,4 +107,4 @@ venv.bak/
 .idea
 
 # Ignore pipeline folder for now
-pipeline/
+pipeline/*.exe
