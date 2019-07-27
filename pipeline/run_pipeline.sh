@@ -12,7 +12,7 @@ temp_filtered="filtered.osm"
 # ********************************
 
 # Increase node RAM size
-export NODE_OPTIONS=--max_old_space_size=8192
+export NODE_OPTIONS=--max_old_space_size=16384
 
 # Switch into pipeline directory
 cd "${0%/*}"
