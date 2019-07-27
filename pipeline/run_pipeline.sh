@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 
-# ************ Usage ************
+# ************ Usage *************
 # 1st parameter: Input file to use (*.osm or *.pbf)
 # 2nd parameter: Output file to produce (*.json)
 # Following parameters: Osmfilter arguments
-# *******************************
+# ********************************
 
-# Name of temp files
+# ****** Name of temp files ******
 temp_o5m="converted_data.o5m"
 temp_filtered="filtered.osm"
+# ********************************
+
+# Increase node RAM size
+export NODE_OPTIONS=--max_old_space_size=8192
 
 # Switch into pipeline directory
 cd "${0%/*}"
