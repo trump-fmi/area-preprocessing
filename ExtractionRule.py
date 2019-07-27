@@ -71,9 +71,6 @@ class ExtractionRule:
                 name = name.replace("'", "").replace("\"", "").replace("\n", "")
                 names_dict[id] = name
 
-            if id in geometries_dict:
-                print("DUPLICATE!!!!!!!!!!!!!!!!!!!!!")
-
             # Add geometry to geometry dict
             geometries_dict[id] = geometry
 
