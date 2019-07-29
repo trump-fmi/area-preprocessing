@@ -30,7 +30,6 @@ JSON_KEY_TYPE_NAME = "name"
 JSON_KEY_TYPE_TABLE_NAME = "table_name"
 JSON_KEY_TYPE_GEOMETRY_LIST = "geometries"
 JSON_KEY_TYPE_CONDITIONS = "filter_parameters"
-JSON_KEY_TYPE_LABELS = "labels"
 JSON_KEY_TYPE_SIMPLIFICATION = "simplification"
 JSON_KEY_TYPE_ZOOM_MIN = "zoom_min"
 JSON_KEY_TYPE_ZOOM_MAX = "zoom_max"
@@ -94,7 +93,6 @@ def extractAreaType(area_type):
     name = str(area_type[JSON_KEY_TYPE_NAME])
     table_name = str(area_type[JSON_KEY_TYPE_TABLE_NAME])
     filter_parameters = str(area_type[JSON_KEY_TYPE_CONDITIONS])
-    extract_labels = bool(area_type[JSON_KEY_TYPE_LABELS])
     simplify_geometries = bool(area_type[JSON_KEY_TYPE_SIMPLIFICATION])
     zoom_min = float(area_type[JSON_KEY_TYPE_ZOOM_MIN])
     zoom_max = float(area_type[JSON_KEY_TYPE_ZOOM_MAX])
