@@ -17,17 +17,21 @@ export NODE_OPTIONS=--max_old_space_size=16384
 # Switch into pipeline directory
 cd "${0%/*}"
 
+# Uncomment for windows
+# cd pipeline
+
 # Store command line parameters
 input_file="$1"
 output_file="$2"
+
+# Discard first two command line parameters
+shift 2
 
 echo "Started extraction pipeline"
 echo "---------------------------------------------"
 echo "Input file: \"${input_file}\""
 echo "Output file: \"${output_file}\""
-
-# Discard first two command line parameters
-shift 2
+echo "Filter parameters: \"$@\""
 
 # Install/Update osmtogeojson
 echo "Updating components..."
