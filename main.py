@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from ExtractionRule import ExtractionRule
+from NoSimplification import NoSimplification
 from SimpleSimplification import SimpleSimplification
 from BlackBoxSimplification import BlackBoxSimplification
 from database import DatabaseConnection
@@ -29,32 +30,36 @@ JSON_KEY_TYPES_LIST = "types"
 JSON_KEY_TYPE_NAME = "name"
 JSON_KEY_TYPE_TABLE_NAME = "table_name"
 JSON_KEY_TYPE_GEOMETRY_LIST = "geometries"
-JSON_KEY_TYPE_CONDITIONS = "filter_condition"
-JSON_KEY_TYPE_LABELS = "labels"
+JSON_KEY_TYPE_CONDITIONS = "filter_parameters"
 JSON_KEY_TYPE_SIMPLIFICATION = "simplification"
 JSON_KEY_TYPE_ZOOM_MIN = "zoom_min"
 JSON_KEY_TYPE_ZOOM_MAX = "zoom_max"
 
-# Required queries for creating and preparing a result table
-RESULT_TABLE_QUERIES = ["DROP TABLE IF EXISTS {0};",
-                        """CREATE TABLE {0}
-                        (
-                            id INT NOT NULL,
-                            geom GEOMETRY NOT NULL,
-                            zoom INT DEFAULT 0,
-                            name TEXT DEFAULT NULL,
-                            geojson TEXT DEFAULT NULL,
-                            CONSTRAINT {0}_unique_id UNIQUE (id, zoom)
-                        );""",
-                        "CREATE INDEX {0}_geom_index ON {0} USING GIST(geom);",
-                        "CREATE INDEX {0}_zoom_index ON {0} (zoom);"
-                        "CLUSTER {0}_geom_index ON {0};"]
+# Required queries for preparing a result table
+TABLE_PRE_QUERIES = ["DROP TABLE IF EXISTS {0};",
+                     """CREATE TABLE {0}
+                     (
+                         id INT NOT NULL,
+                         geom GEOMETRY NOT NULL,
+                         zoom INT DEFAULT 0,
+                         name TEXT DEFAULT NULL,
+                         geojson TEXT DEFAULT NULL,
+                         CONSTRAINT {0}_unique_id UNIQUE (id, zoom)
+                     );"""]
+
+# Required queries for postprocessing a result table
+TABLE_POST_QUERIES = ["CREATE INDEX {0}_geom_index ON {0} USING GIST(geom);",
+                      "CREATE INDEX {0}_zoom_index ON {0} (zoom);"
+                      "CLUSTER {0}_geom_index ON {0};"]
 
 # Supported zoom range
 ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
-SIMPLIFICATION = BlackBoxSimplification()
+# SIMPLIFICATION = BlackBoxSimplification()
+# SIMPLIFICATION = SimpleSimplification()
+SIMPLIFICATION = NoSimplification()
+
 
 WRITE_BATCH_SIZE = 100
 
@@ -90,9 +95,7 @@ def extractAreaType(area_type):
     # Extract properties of interest from area types definition
     name = str(area_type[JSON_KEY_TYPE_NAME])
     table_name = str(area_type[JSON_KEY_TYPE_TABLE_NAME])
-    geometry_list = map(SOURCE_TABLES.get, area_type[JSON_KEY_TYPE_GEOMETRY_LIST])
-    conditions = str(area_type[JSON_KEY_TYPE_CONDITIONS])
-    extract_labels = bool(area_type[JSON_KEY_TYPE_LABELS])
+    filter_parameters = str(area_type[JSON_KEY_TYPE_CONDITIONS])
     simplify_geometries = bool(area_type[JSON_KEY_TYPE_SIMPLIFICATION])
     zoom_min = float(area_type[JSON_KEY_TYPE_ZOOM_MIN])
     zoom_max = float(area_type[JSON_KEY_TYPE_ZOOM_MAX])
@@ -100,13 +103,13 @@ def extractAreaType(area_type):
     print(f"Next area type: \"{name}\"")
 
     print(f"Preparing table \"{table_name}\"...")
-    createResultTable(database, table_name)
+    prepare_table(database, table_name)
     print(f"Table prepared")
 
     # Create extraction rule and use it to extract geometries and names
-    print("Extracting geometries:")
-    extraction_rule = ExtractionRule(conditions)
-    geometries_dict, names_dict = extraction_rule.extract(database, geometry_list)
+    print("Extracting geometries...")
+    extraction_rule = ExtractionRule(filter_parameters)
+    geometries_dict, names_dict = extraction_rule.extract()
     print(f"Extracted {len(geometries_dict)} geometries and {len(names_dict)} names")
 
     print("Preprocessing data...")
@@ -130,6 +133,9 @@ def extractAreaType(area_type):
 
         # Force garbage collection
         gc.collect()
+
+    print(f"Postprocessing table \"{table_name}\"...")
+    postprocess_table(database, table_name)
 
     print(f"Finished area type \"{name}\"")
 
@@ -163,14 +169,20 @@ def write_geometries(table_name, geometries, names, zoom):
             queryValues.append(value)
 
         # Build query string
-        queryString = f"INSERT INTO {table_name} (id, geom, zoom, name, geojson) VALUES " + (",".join(queryValues)) + ";"
+        queryString = f"INSERT INTO {table_name} (id, geom, zoom, name, geojson) VALUES " + (
+            ",".join(queryValues)) + ";"
 
         # Insert into database
         database.query(queryString)
 
 
-def createResultTable(database, table_name):
-    for query in RESULT_TABLE_QUERIES:
+def prepare_table(database, table_name):
+    for query in TABLE_PRE_QUERIES:
+        database.query(query.format(table_name))
+
+
+def postprocess_table(database, table_name):
+    for query in TABLE_POST_QUERIES:
         database.query(query.format(table_name))
 
 

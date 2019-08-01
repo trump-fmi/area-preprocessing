@@ -1,4 +1,3 @@
-import copy
 from Simplification import Simplification
 
 

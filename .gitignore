@@ -106,4 +106,9 @@ venv.bak/
 # Pycharm
 .idea
 
+
 *.py~
+
+# Ignore pipeline folder for now
+pipeline/*.exe
+
