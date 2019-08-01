@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from ExtractionRule import ExtractionRule
 from SimpleSimplification import SimpleSimplification
+from BlackBoxSimplification import BlackBoxSimplification
 from database import DatabaseConnection
 import json
 from jsonschema import validate
@@ -11,10 +12,10 @@ AREA_TYPES_DOCUMENT_FILE = "../area-types/area_types.json"
 AREA_TYPES_SCHEMA_FILE = "../area-types/area_types_schema.json"
 
 # Database settings
-DATABASE_HOST = "localhost"
+DATABASE_HOST = "seeigel.informatik.uni-stuttgart.de"
 DATABASE_NAME = "gis"
-DATABASE_USER = "postgres"
-DATABASE_PASSWORD = None
+DATABASE_USER = "extern"
+DATABASE_PASSWORD = "trump-fmi"
 
 # Maps geometry types to source tables in the database
 SOURCE_TABLES = {
@@ -53,7 +54,7 @@ RESULT_TABLE_QUERIES = ["DROP TABLE IF EXISTS {0};",
 ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
-SIMPLIFICATION = SimpleSimplification()
+SIMPLIFICATION = BlackBoxSimplification()
 
 WRITE_BATCH_SIZE = 100
 
@@ -119,7 +120,7 @@ def extractAreaType(area_type):
 
         # Check if simplification is desired
         if simplify_geometries:
-            processed_result = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom)
+            processed_result = SIMPLIFICATION.simplify(geometries=geometries_dict, zoom=zoom)
         else:
             processed_result = geometries_dict
 

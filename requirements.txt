@@ -1,3 +1,2 @@
-simplification
 psycopg2
 jsonschema
