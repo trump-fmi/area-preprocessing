@@ -7,10 +7,7 @@ class BlackBoxSimplification(Simplification):
     def __init__(self):
         pass
 
-    def simplify(self, geometries, zoom):
-        geometries_count = 0
-        points_count = 0
-        simplified_points_count = 0
+    def simplify(self, constraint_points, geometries, zoom):
         all_coordinates = []
 
         # Iterate over all geometries
@@ -18,44 +15,14 @@ class BlackBoxSimplification(Simplification):
 
             # Geometry is a line string
             if geometry['type'] == 'LineString':
-                #if all_coordinates == None:
                 all_coordinates.append(geometry['coordinates'])
-                #else:
-                #    all_coordinates += geometry['coordinates']
-
-                # Count stats
-                geometries_count += 1
-                #points_count += len(coordinates)
-
-                # Apply simplification
-                #self.removeCoordinates(coordinates, zoom)
-                #geometries[geoIndex]['coordinates'] = coordinates
-
-                # Count stats
-                #simplified_points_count += len(coordinates)
 
             # Geometry is a multi line string
             elif geometry['type'] == 'MultiLineString':
                 line_strings = geometry['coordinates']
 
                 for line_index, line_coordinates in enumerate(line_strings):
-
-                    #if all_coordinates == None:
                     all_coordinates.append(line_coordinates)
-                    #print(all_coordinates)
-                    #else:
-                    #    all_coordinates += line_coordinates
-
-                  # Count stats
-                    geometries_count += 1
-                    points_count += len(line_coordinates)
-
-                    # Apply simplification
-                    #self.removeCoordinates(line_coordinates, zoom)
-                    #line_strings[line_index] = line_coordinates
-
-                    # Count stats
-                    simplified_points_count += len(line_coordinates)
 
                 line_strings[:] = [line for line in line_strings if len(line) > 1]
 
@@ -65,83 +32,36 @@ class BlackBoxSimplification(Simplification):
 
                 # Iterate over all contained line rings
                 for ringIndex, ringCoordinates in enumerate(line_rings):
-                    #if all_coordinates == None:
                     all_coordinates.append(ringCoordinates)
-                    #else:
-                    #    all_coordinates += ringCoordinates
-
-                    # Count stats
-                    geometries_count += 1
-                    points_count += len(ringCoordinates)
-
-
-                    # Apply simplification
-                    #self.removeCoordinates(ringCoordinates, zoom)
-                    #line_rings[ringIndex] = ringCoordinates
-
-                    # Count stats
-                    simplified_points_count += len(ringCoordinates)
 
                 line_rings[:] = [ring for ring in line_rings if len(ring) > 1]
 
+            # Geometry is a multi polygon
             elif geometry['type'] == 'MultiPolygon':
                 polygon_list = geometry['coordinates']
 
                 for polygonIndex, line_rings in enumerate(polygon_list):
                     # Iterate over all contained line rings
                     for ringIndex, ringCoordinates in enumerate(line_rings):
-
-                        #if all_coordinates == None:
                         all_coordinates.append(ringCoordinates)
-                        #else:
-                        #    all_coordinates += ringCoordinates
-
-                        # Count stats
-                        geometries_count += 1
-                        points_count += len(ringCoordinates)
-
-
-                        # Apply simplification
-                        #self.removeCoordinates(ringCoordinates, zoom)
-                        #polygon_list[polygonIndex][ringIndex] = ringCoordinates
-
-                        # Count stats
-                        simplified_points_count += len(ringCoordinates)
 
                     polygon_list[polygonIndex][:] = [ring for ring in polygon_list[polygonIndex] if len(ring) > 1]
             else:
                 print(f"Other geometry: {geometry['type']}")
                 # raise Exception("Invalid geometry type")
 
-
-        
-        # Output stats
-        print(f"---------- Zoom: {zoom} ----------")
-        print(f"Geometries: {geometries_count}")
-        print(f"Total points: {points_count}")
-        print(f"Remaining points: {simplified_points_count}")
-        print(f"Total points per geometry:  {points_count / geometries_count}")
-        print(f"Remaining points per geometry:  {simplified_points_count / geometries_count}")
-        print("----------------------------------")
-        print()
-
-        print("getting constraints...")
-        self.getConstraints(zoom)
-
-        print("running black box...")
-        self.blackBox([], geometries_count, all_coordinates)
+        print("Running black box...")
+        self.blackBox([], all_coordinates)
 
         return geometries
 
-
-
-    def blackBox(self, constraints, geometries_count, coordinates):
+    def blackBox(self, constraints, coordinates):
         # create input string here
         input = ""
         for point in constraints:
             input += str(point)
         input += "\n"
-        input += str(geometries_count)
+        input += str(len(coordinates))
         input += "\n"
         for geometry in coordinates:
             for point in geometry:
@@ -169,9 +89,3 @@ class BlackBoxSimplification(Simplification):
         topo_output = topo_process.stdout
 
         return topo_output
-
-
-
-    def getConstraints(self, zoom):
-        # figure out how to do this
-        print("--- constraints not implemented yet---")

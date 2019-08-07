@@ -5,7 +5,7 @@ class SimpleSimplification(Simplification):
     def __init__(self):
         pass
 
-    def simplify(self, geometries, zoom):
+    def simplify(self, constraint_points, geometries, zoom):
         geometries_count = 0
         points_count = 0
         simplified_points_count = 0

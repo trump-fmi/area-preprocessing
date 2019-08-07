@@ -13,10 +13,10 @@ AREA_TYPES_DOCUMENT_FILE = "../area-types/area_types.json"
 AREA_TYPES_SCHEMA_FILE = "../area-types/area_types_schema.json"
 
 # Database settings
-DATABASE_HOST = "seeigel.informatik.uni-stuttgart.de"
+DATABASE_HOST = "localhost"
 DATABASE_NAME = "gis"
-DATABASE_USER = "extern"
-DATABASE_PASSWORD = "trump-fmi"
+DATABASE_USER = "postgres"
+DATABASE_PASSWORD = None
 
 # Maps geometry types to source tables in the database
 SOURCE_TABLES = {
@@ -30,7 +30,7 @@ JSON_KEY_TYPES_LIST = "types"
 JSON_KEY_TYPE_NAME = "name"
 JSON_KEY_TYPE_TABLE_NAME = "table_name"
 JSON_KEY_TYPE_GEOMETRY_LIST = "geometries"
-JSON_KEY_TYPE_CONDITIONS = "filter_parameters"
+JSON_KEY_TYPE_CONDITIONS = "filter_conditions"
 JSON_KEY_TYPE_SIMPLIFICATION = "simplification"
 JSON_KEY_TYPE_ZOOM_MIN = "zoom_min"
 JSON_KEY_TYPE_ZOOM_MAX = "zoom_max"
@@ -57,7 +57,6 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
 # SIMPLIFICATION = BlackBoxSimplification()
-# SIMPLIFICATION = SimpleSimplification()
 SIMPLIFICATION = NoSimplification()
 
 
@@ -95,7 +94,7 @@ def extractAreaType(area_type):
     # Extract properties of interest from area types definition
     name = str(area_type[JSON_KEY_TYPE_NAME])
     table_name = str(area_type[JSON_KEY_TYPE_TABLE_NAME])
-    filter_parameters = str(area_type[JSON_KEY_TYPE_CONDITIONS])
+    filter_conditions_list = area_type[JSON_KEY_TYPE_CONDITIONS]
     simplify_geometries = bool(area_type[JSON_KEY_TYPE_SIMPLIFICATION])
     zoom_min = float(area_type[JSON_KEY_TYPE_ZOOM_MIN])
     zoom_max = float(area_type[JSON_KEY_TYPE_ZOOM_MAX])
@@ -108,7 +107,7 @@ def extractAreaType(area_type):
 
     # Create extraction rule and use it to extract geometries and names
     print("Extracting geometries...")
-    extraction_rule = ExtractionRule(filter_parameters)
+    extraction_rule = ExtractionRule(filter_conditions_list)
     geometries_dict, names_dict = extraction_rule.extract()
     print(f"Extracted {len(geometries_dict)} geometries and {len(names_dict)} names")
 
@@ -123,7 +122,7 @@ def extractAreaType(area_type):
 
         # Check if simplification is desired
         if simplify_geometries:
-            processed_result = SIMPLIFICATION.simplify(geometries=geometries_dict, zoom=zoom)
+            processed_result = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom)
         else:
             processed_result = geometries_dict
 
