@@ -12,8 +12,8 @@ TARGET_PROJECTION = 4326
 
 
 class ExtractionRule:
-    def __init__(self, filter_parameters):
-        self.filter_parameters = filter_parameters
+    def __init__(self, filter_conditions_list):
+        self.filter_conditions_list = filter_conditions_list
 
     def extract(self):
         # Dict for all extracted geometries
@@ -22,26 +22,42 @@ class ExtractionRule:
         # Dict for all extracted names
         names_dict = {}
 
-        # Build pipeline script call with parameters
-        script_path = os.path.join(PIPELINE_DIR, PIPELINE_SCRIPT_NAME)
-        script_call = script_path + f" \"{INPUT_FILE_PATH}\" \"{OUTPUT_FILE_NAME}\" {self.filter_parameters}"
+        # Stores all features that were extracted by the various filter conditions
+        extracted_features = []
 
-        # Execute script
-        return_value = os.system(script_call)
+        print(f"There are {len(self.filter_conditions_list)} filter conditions")
 
-        if return_value != 0:
-            print("Error: Pipeline script execution failed.")
-            exit(-1)
+        # Iterate over the list of filter conditions
+        for filter_condition in self.filter_conditions_list:
 
-        # Read in extracted GeoJSON data
-        output_file_path = os.path.join(PIPELINE_DIR, OUTPUT_FILE_NAME)
-        with open(output_file_path) as json_file:
-            extracted_features = json.load(json_file)["features"]
+            print(f"Next filter condition: {filter_condition}")
 
-        # Sanity check
-        if extracted_features is None:
-            print("Error: Reading pipeline output file failed.")
-            exit(-1)
+            # Build pipeline script call with parameters
+            script_path = os.path.join(PIPELINE_DIR, PIPELINE_SCRIPT_NAME)
+            script_call = script_path + f" \"{INPUT_FILE_PATH}\" \"{OUTPUT_FILE_NAME}\" {filter_condition}"
+
+            # Execute script
+            return_value = os.system(script_call)
+
+            # Check script return value
+            if return_value != 0:
+                print("Error: Pipeline script execution failed.")
+                exit(-1)
+
+            # Read in extracted GeoJSON data
+            output_file_path = os.path.join(PIPELINE_DIR, OUTPUT_FILE_NAME)
+            with open(output_file_path) as json_file:
+                # Retrieve features
+                loaded_features = json.load(json_file)["features"]
+                print(f"Filter condition resulted in {len(loaded_features)} features")
+
+                # Add features to list of all extracted features
+                extracted_features.extend(loaded_features)
+
+            # Sanity check
+            if len(extracted_features) < 1:
+                print("Error: Reading pipeline output failed.")
+                exit(-1)
 
         # Iterate over all extracted features
         for feature in extracted_features:
@@ -49,6 +65,10 @@ class ExtractionRule:
             # Get feature id and extract number
             id = feature["id"]
             id = id.split("/", 1)[1]
+
+            # Check if geometry with this id has been already extracted
+            if id in geometries_dict:
+                continue
 
             # Get feature geometry
             geometry = feature["geometry"]
