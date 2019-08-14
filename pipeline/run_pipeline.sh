@@ -22,9 +22,9 @@ cd "${0%/*}"
 # Store command line parameters
 INPUT_FILE="$1"
 OUTPUT_FILE="$2"
-HASHED_NAME="$(sha256sum "$INPUT_FILE" | cut -d" " -f 1 | cut -c-10 ).o5m"
+HASHED_O5M_PATH="$(sha256sum "$INPUT_FILE" | cut -d" " -f 1 | cut -c-10 ).o5m"
 
-echo "Filename with content hash is $HASHED_NAME"
+echo "Filename with content hash is $HASHED_O5M_PATH"
 
 # Discard first two command line parameters
 shift 2
@@ -39,17 +39,17 @@ echo "Filter parameters: \"$@\""
 echo "Removing old JSON files..."
 rm -f *.json
 
-if [ ! -f /tmp/foo.txt ]; then
+if [ ! -f "$HASHED_O5M_PATH" ]; then
     # Convert input file
-    echo "Converting input file to o5m format ($HASHED_NAME)..."
-    osmconvert "${INPUT_FILE}" -o="${TEMP_O5M}"
+    echo "Converting input file to o5m format ($HASHED_O5M_PATH)..."
+    osmconvert "${INPUT_FILE}" -o="${HASHED_O5M_PATH}"
 else
-    echo "Not converting input file because $HASHED_NAME already exists"
+    echo "Not converting input file because $HASHED_O5M_PATH already exists"
 fi
 
 # Filter OSM data
 echo "Filtering for requested OSM data..."
-osmfilter "${HASHED_NAME}" -o="${TEMP_FILTERED}" "$@"
+osmfilter "${HASHED_O5M_PATH}" -o="${TEMP_FILTERED}" "$@"
 
 # Convert result to GeoJSON
 echo "Converting OSM data to GeoJSON..."
