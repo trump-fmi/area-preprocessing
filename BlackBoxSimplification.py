@@ -48,7 +48,9 @@ class BlackBoxSimplification(Simplification):
                 # raise Exception("Invalid geometry type")
 
         print("Running black box...")
-        self.blackBox([], all_coordinates)
+        #simplified_geometries = self.blackBox([[9.1067832, 48.7448467], [9.2190092, 48.6600964], [8.8484828, 48.6103653]], all_coordinates)
+        simplified_geometries = self.blackBox([], all_coordinates)      
+
 
         return geometries
 
@@ -70,7 +72,8 @@ class BlackBoxSimplification(Simplification):
 
         xfree_output = xfree_process.stdout
 
-        topo_process = run(["../topo_simplify/CTR/build/topo_simplify"], stdout=PIPE, input=xfree_output,
+        # chose 0.3 as epsilon value, might need adjustment
+        topo_process = run(["../topo_simplify/CTR/build/topo_simplify", "0.3"], stdout=PIPE, input=xfree_output,
                            encoding='ascii')
 
         if topo_process.returncode is not 0:
@@ -78,5 +81,6 @@ class BlackBoxSimplification(Simplification):
             exit(1)
 
         topo_output = topo_process.stdout
+
 
         return topo_output
