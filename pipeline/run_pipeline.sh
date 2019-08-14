@@ -33,21 +33,17 @@ echo "Input file: \"${input_file}\""
 echo "Output file: \"${output_file}\""
 echo "Filter parameters: \"$@\""
 
-# Install/Update osmtogeojson
-echo "Updating components..."
-npm install -g osmtogeojson
-
 # Remove old stuff
 echo "Removing old JSON files..."
 rm -f *.json
 
 # Convert input file
 echo "Converting input file to o5m format..."
-./osmconvert "${input_file}" -o="${temp_o5m}"
+osmconvert "${input_file}" -o="${temp_o5m}"
 
 # Filter OSM data
 echo "Filtering for requested OSM data..."
-./osmfilter "${temp_o5m}" -o="${temp_filtered}" "$@"
+osmfilter "${temp_o5m}" -o="${temp_filtered}" "$@"
 
 # Convert result to GeoJSON
 echo "Converting OSM data to GeoJSON..."
