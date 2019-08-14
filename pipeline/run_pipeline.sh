@@ -7,8 +7,7 @@
 # ********************************
 
 # ****** Name of temp files ******
-temp_o5m="converted_data.o5m"
-temp_filtered="filtered.osm"
+TEMP_FILTERED="filtered.osm"
 # ********************************
 
 # Increase node RAM size
@@ -21,38 +20,44 @@ cd "${0%/*}"
 # cd pipeline
 
 # Store command line parameters
-input_file="$1"
-output_file="$2"
+INPUT_FILE="$1"
+OUTPUT_FILE="$2"
+HASHED_NAME="$(sha256sum "$INPUT_FILE" | cut -d" " -f 1 | cut -c-10 ).o5m"
+
+echo "Filename with content hash is $HASHED_NAME"
 
 # Discard first two command line parameters
 shift 2
 
 echo "Started extraction pipeline"
 echo "---------------------------------------------"
-echo "Input file: \"${input_file}\""
-echo "Output file: \"${output_file}\""
+echo "Input file: \"${INPUT_FILE}\""
+echo "Output file: \"${OUTPUT_FILE}\""
 echo "Filter parameters: \"$@\""
 
 # Remove old stuff
 echo "Removing old JSON files..."
 rm -f *.json
 
-# Convert input file
-echo "Converting input file to o5m format..."
-osmconvert "${input_file}" -o="${temp_o5m}"
+if [ ! -f /tmp/foo.txt ]; then
+    # Convert input file
+    echo "Converting input file to o5m format ($HASHED_NAME)..."
+    osmconvert "${INPUT_FILE}" -o="${TEMP_O5M}"
+else
+    echo "Not converting input file because $HASHED_NAME already exists"
+fi
 
 # Filter OSM data
 echo "Filtering for requested OSM data..."
-osmfilter "${temp_o5m}" -o="${temp_filtered}" "$@"
+osmfilter "${HASHED_NAME}" -o="${TEMP_FILTERED}" "$@"
 
 # Convert result to GeoJSON
 echo "Converting OSM data to GeoJSON..."
-osmtogeojson -m "${temp_filtered}" > "${output_file}"
+osmtogeojson -m "${TEMP_FILTERED}" > "${OUTPUT_FILE}"
 
 # Remove all temp files
 echo "Cleaning up..."
-rm -f temp_o5m = "${temp_o5m}"
-rm -f "${temp_filtered}"
+rm -f "${TEMP_FILTERED}"
 
 echo "Successfully done."
 
