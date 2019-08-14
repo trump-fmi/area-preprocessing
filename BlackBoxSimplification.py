@@ -1,3 +1,5 @@
+import string
+
 from Simplification import Simplification
 from subprocess import run, PIPE
 from sys import exit
@@ -24,8 +26,6 @@ class BlackBoxSimplification(Simplification):
                 for line_index, line_coordinates in enumerate(line_strings):
                     all_coordinates.append(line_coordinates)
 
-                line_strings[:] = [line for line in line_strings if len(line) > 1]
-
             # Geometry is a polygon
             elif geometry['type'] == 'Polygon':
                 line_rings = geometry['coordinates']
@@ -33,8 +33,6 @@ class BlackBoxSimplification(Simplification):
                 # Iterate over all contained line rings
                 for ringIndex, ringCoordinates in enumerate(line_rings):
                     all_coordinates.append(ringCoordinates)
-
-                line_rings[:] = [ring for ring in line_rings if len(ring) > 1]
 
             # Geometry is a multi polygon
             elif geometry['type'] == 'MultiPolygon':
@@ -45,7 +43,6 @@ class BlackBoxSimplification(Simplification):
                     for ringIndex, ringCoordinates in enumerate(line_rings):
                         all_coordinates.append(ringCoordinates)
 
-                    polygon_list[polygonIndex][:] = [ring for ring in polygon_list[polygonIndex] if len(ring) > 1]
             else:
                 print(f"Other geometry: {geometry['type']}")
                 # raise Exception("Invalid geometry type")
@@ -55,22 +52,17 @@ class BlackBoxSimplification(Simplification):
 
         return geometries
 
-    def blackBox(self, constraints, coordinates):
-        # create input string here
-        input = ""
-        for point in constraints:
-            input += str(point)
-        input += "\n"
-        input += str(len(coordinates))
-        input += "\n"
-        for geometry in coordinates:
-            for point in geometry:
-                input += str(point)
-            input += "\n"
-        input = input.rstrip()
+    def blackBox(self, constraint_points, coordinates):
+
+        # Put input string together
+        input_string = " ".join(map(lambda t: " ".join(map(str, t)), constraint_points))
+        input_string += "\n"
+        input_string += str(len(coordinates))
+        input_string += "\n"
+        input_string += "\n".join(map(lambda b: " ".join(map(lambda t: " ".join(map(str, t)), b)), coordinates))
 
         # run black box
-        xfree_process = run(["../topo_simplify/XFREE/build/xfree"], stdout=PIPE, input=input, encoding='ascii')
+        xfree_process = run(["../topo_simplify/XFREE/build/xfree"], stdout=PIPE, input=input_string, encoding='ascii')
 
         if xfree_process.returncode is not 0:
             print("xfree command failed.")
@@ -78,9 +70,8 @@ class BlackBoxSimplification(Simplification):
 
         xfree_output = xfree_process.stdout
 
-        #print("xfree output:\n{}".format(xfree_output))
-
-        topo_process = run(["../topo_simplify/CTR/build/topo_simplify"], stdout=PIPE, input=xfree_output, encoding='ascii')
+        topo_process = run(["../topo_simplify/CTR/build/topo_simplify"], stdout=PIPE, input=xfree_output,
+                           encoding='ascii')
 
         if topo_process.returncode is not 0:
             print("topo_simplify command failed.")

@@ -56,10 +56,10 @@ TABLE_POST_QUERIES = ["CREATE INDEX {0}_geom_index ON {0} USING GIST(geom);",
 ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
-# SIMPLIFICATION = BlackBoxSimplification()
-SIMPLIFICATION = NoSimplification()
+SIMPLIFICATION = BlackBoxSimplification()
+# SIMPLIFICATION = NoSimplification()
 
-
+# Number of geometries to write within one database query
 WRITE_BATCH_SIZE = 100
 
 # Database instance
