@@ -15,7 +15,7 @@ AREA_TYPES_SCHEMA_FILE = "../area-types/area_types_schema.json"
 # Database settings
 DATABASE_HOST = "localhost"
 DATABASE_NAME = "gis"
-DATABASE_USER = "postgres"
+DATABASE_USER = "osm"
 DATABASE_PASSWORD = None
 
 # Maps geometry types to source tables in the database
