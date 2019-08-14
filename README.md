@@ -5,6 +5,7 @@ Processes the geometric area data that is stored in the database and simplifies 
 
 - `osmconvert`
 - `osmfilter`
+- `osmtogeojson`
 - `npm`
 - `python3-psycopg2`
 - `python3-jsonschema`
