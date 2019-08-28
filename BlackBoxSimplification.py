@@ -11,6 +11,7 @@ class BlackBoxSimplification(Simplification):
 
     def simplify(self, constraint_points, geometries, zoom):
         all_coordinates = []
+        all_geometries = []
 
         # Iterate over all geometries
         for geoIndex, geometry in geometries.items():
@@ -18,6 +19,7 @@ class BlackBoxSimplification(Simplification):
             # Geometry is a line string
             if geometry['type'] == 'LineString':
                 all_coordinates.append(geometry['coordinates'])
+                all_geometries.append(geometry)
 
             # Geometry is a multi line string
             elif geometry['type'] == 'MultiLineString':
@@ -25,6 +27,7 @@ class BlackBoxSimplification(Simplification):
 
                 for line_index, line_coordinates in enumerate(line_strings):
                     all_coordinates.append(line_coordinates)
+                    all_geometries.append(geometry)
 
             # Geometry is a polygon
             elif geometry['type'] == 'Polygon':
@@ -33,6 +36,7 @@ class BlackBoxSimplification(Simplification):
                 # Iterate over all contained line rings
                 for ringIndex, ringCoordinates in enumerate(line_rings):
                     all_coordinates.append(ringCoordinates)
+                    all_geometries.append(geometry)
 
             # Geometry is a multi polygon
             elif geometry['type'] == 'MultiPolygon':
@@ -42,6 +46,7 @@ class BlackBoxSimplification(Simplification):
                     # Iterate over all contained line rings
                     for ringIndex, ringCoordinates in enumerate(line_rings):
                         all_coordinates.append(ringCoordinates)
+                        all_geometries.append(geometry)
 
             else:
                 print(f"Other geometry: {geometry['type']}")
@@ -51,6 +56,10 @@ class BlackBoxSimplification(Simplification):
         #simplified_geometries = self.blackBox([[9.1067832, 48.7448467], [9.2190092, 48.6600964], [8.8484828, 48.6103653]], all_coordinates)
         simplified_geometries = self.blackBox([], all_coordinates)      
 
+        # put simplified border parts back to borders
+        
+
+        # match borders to their geometries
 
         return geometries
 
