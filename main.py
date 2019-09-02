@@ -28,12 +28,12 @@ SOURCE_TABLES = {
 # JSON key names of the area types definition
 JSON_KEY_TYPES_LIST = "types"
 JSON_KEY_TYPE_NAME = "name"
-JSON_KEY_TYPE_TABLE_NAME = "table_name"
-JSON_KEY_TYPE_GEOMETRY_LIST = "geometries"
-JSON_KEY_TYPE_CONDITIONS = "filter_parameters"
-JSON_KEY_TYPE_SIMPLIFICATION = "simplification"
-JSON_KEY_TYPE_ZOOM_MIN = "zoom_min"
-JSON_KEY_TYPE_ZOOM_MAX = "zoom_max"
+JSON_KEY_TYPE_SOURCES = "sources"
+JSON_KEY_TYPE_SOURCE_TABLE_NAME = "table_name"
+JSON_KEY_TYPE_SOURCE_FILTERS = "filter_parameters"
+JSON_KEY_TYPE_SOURCE_SIMPLIFICATION = "simplification"
+JSON_KEY_TYPE_SOURCE_ZOOM_MIN = "zoom_min"
+JSON_KEY_TYPE_SOURCE_ZOOM_MAX = "zoom_max"
 
 # Required queries for preparing a result table
 TABLE_PRE_QUERIES = ["DROP TABLE IF EXISTS {0};",
@@ -79,8 +79,20 @@ def main():
     print("Successfully connected")
 
     # Iterate over all area types
-    for type in area_types:
-        extractAreaType(type)
+    for area_type in area_types:
+        # Get area type name
+        area_type_name = str(area_type[JSON_KEY_TYPE_NAME])
+
+        # Get area type sources
+        area_type_sources = area_type[JSON_KEY_TYPE_SOURCES]
+
+        print(f"Next area type: \"{area_type_name}\"")
+
+        # Iterate over all sources of this area type and invoke their extraction
+        for area_type_source in area_type_sources:
+            extractAreaTypeSource(area_type_source)
+
+        print(f"Finished area type \"{area_type_name}\"")
 
     print("Simplification finished")
     print("Everything done.")
@@ -88,18 +100,15 @@ def main():
     database.disconnect()
 
 
-def extractAreaType(area_type):
+def extractAreaTypeSource(area_type_source):
     global database
 
-    # Extract properties of interest from area types definition
-    name = str(area_type[JSON_KEY_TYPE_NAME])
-    table_name = str(area_type[JSON_KEY_TYPE_TABLE_NAME])
-    filter_conditions_list = area_type[JSON_KEY_TYPE_CONDITIONS]
-    simplify_geometries = bool(area_type[JSON_KEY_TYPE_SIMPLIFICATION])
-    zoom_min = float(area_type[JSON_KEY_TYPE_ZOOM_MIN])
-    zoom_max = float(area_type[JSON_KEY_TYPE_ZOOM_MAX])
-
-    print(f"Next area type: \"{name}\"")
+    # Extract properties of interest from area type source definition
+    table_name = str(area_type_source[JSON_KEY_TYPE_SOURCE_TABLE_NAME])
+    filter_conditions_list = area_type_source[JSON_KEY_TYPE_SOURCE_FILTERS]
+    simplify_geometries = bool(area_type_source[JSON_KEY_TYPE_SOURCE_SIMPLIFICATION])
+    zoom_min = float(area_type_source[JSON_KEY_TYPE_SOURCE_ZOOM_MIN])
+    zoom_max = float(area_type_source[JSON_KEY_TYPE_SOURCE_ZOOM_MAX])
 
     print(f"Preparing table \"{table_name}\"...")
     prepare_table(database, table_name)
@@ -135,8 +144,6 @@ def extractAreaType(area_type):
 
     print(f"Postprocessing table \"{table_name}\"...")
     postprocess_table(database, table_name)
-
-    print(f"Finished area type \"{name}\"")
 
 
 def write_geometries(table_name, geometries, names, zoom):
