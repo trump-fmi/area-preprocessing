@@ -26,18 +26,18 @@ SOURCE_TABLES = {
 }
 
 # JSON key names of the area types definition
-JSON_KEY_TYPES_LIST = "types"
-JSON_KEY_TYPE_NAME = "name"
-JSON_KEY_TYPE_SOURCES = "sources"
-JSON_KEY_TYPE_SOURCE_LABELS = "labels"
-JSON_KEY_TYPE_SOURCE_LABELS_ARCED = "arced"
-JSON_KEY_TYPE_SOURCE_LABELS_ZOOM_MIN = "zoom_min"
-JSON_KEY_TYPE_SOURCE_LABELS_ZOOM_MAX = "zoom_max"
-JSON_KEY_TYPE_SOURCE_TABLE_NAME = "table_name"
-JSON_KEY_TYPE_SOURCE_FILTERS = "filter_parameters"
-JSON_KEY_TYPE_SOURCE_SIMPLIFICATION = "simplification"
-JSON_KEY_TYPE_SOURCE_ZOOM_MIN = "zoom_min"
-JSON_KEY_TYPE_SOURCE_ZOOM_MAX = "zoom_max"
+JSON_KEY_GROUPS_LIST = "groups"
+JSON_KEY_GROUP_NAME = "name"
+JSON_KEY_GROUP_TYPES = "types"
+JSON_KEY_GROUP_TYPE_LABELS = "labels"
+JSON_KEY_GROUP_TYPE_LABELS_ARCED = "arced"
+JSON_KEY_GROUP_TYPE_LABELS_ZOOM_MIN = "zoom_min"
+JSON_KEY_GROUP_TYPE_LABELS_ZOOM_MAX = "zoom_max"
+JSON_KEY_GROUP_TYPE_TABLE_NAME = "table_name"
+JSON_KEY_GROUP_TYPE_FILTERS = "filter_parameters"
+JSON_KEY_GROUP_TYPE_SIMPLIFICATION = "simplification"
+JSON_KEY_GROUP_TYPE_ZOOM_MIN = "zoom_min"
+JSON_KEY_GROUP_TYPE_ZOOM_MAX = "zoom_max"
 
 # Required queries for preparing a result table
 TABLE_PRE_QUERIES = ["DROP TABLE IF EXISTS {0};",
@@ -70,49 +70,15 @@ WRITE_BATCH_SIZE = 100
 database = None
 
 
-def main():
+def extract_area_type(area_type):
     global database
 
-    # Read area types from JSON file
-    area_types = readAreaTypesFromFile()
-
-    # Connect to database
-    print(f"Connecting to database \"{DATABASE_NAME}\" at \"{DATABASE_HOST}\" as user \"{DATABASE_USER}\"...")
-    database = DatabaseConnection(host=DATABASE_HOST, database=DATABASE_NAME, user=DATABASE_USER,
-                                  password=DATABASE_PASSWORD)
-    print("Successfully connected")
-
-    # Iterate over all area types
-    for area_type in area_types:
-        # Get area type name
-        area_type_name = str(area_type[JSON_KEY_TYPE_NAME])
-
-        # Get area type sources
-        area_type_sources = area_type[JSON_KEY_TYPE_SOURCES]
-
-        print(f"Next area type: \"{area_type_name}\"")
-
-        # Iterate over all sources of this area type and invoke their extraction
-        for area_type_source in area_type_sources:
-            extractAreaTypeSource(area_type_source)
-
-        print(f"Finished area type \"{area_type_name}\"")
-
-    print("Simplification finished")
-    print("Everything done.")
-
-    database.disconnect()
-
-
-def extractAreaTypeSource(area_type_source):
-    global database
-
-    # Extract properties of interest from area type source definition
-    table_name = str(area_type_source[JSON_KEY_TYPE_SOURCE_TABLE_NAME])
-    filter_conditions_list = area_type_source[JSON_KEY_TYPE_SOURCE_FILTERS]
-    simplify_geometries = bool(area_type_source[JSON_KEY_TYPE_SOURCE_SIMPLIFICATION])
-    zoom_min = float(area_type_source[JSON_KEY_TYPE_SOURCE_ZOOM_MIN])
-    zoom_max = float(area_type_source[JSON_KEY_TYPE_SOURCE_ZOOM_MAX])
+    # Extract properties of interest from area type definition
+    table_name = str(area_type[JSON_KEY_GROUP_TYPE_TABLE_NAME])
+    filter_conditions_list = area_type[JSON_KEY_GROUP_TYPE_FILTERS]
+    simplify_geometries = bool(area_type[JSON_KEY_GROUP_TYPE_SIMPLIFICATION])
+    zoom_min = float(area_type[JSON_KEY_GROUP_TYPE_ZOOM_MIN])
+    zoom_max = float(area_type[JSON_KEY_GROUP_TYPE_ZOOM_MAX])
 
     print(f"Preparing table \"{table_name}\"...")
     prepare_table(database, table_name)
@@ -198,7 +164,7 @@ def postprocess_table(database, table_name):
         database.query(query.format(table_name))
 
 
-def readAreaTypesFromFile():
+def read_area_types():
     # Read in area types document file
     print(f"Reading area types document file \"{AREA_TYPES_DOCUMENT_FILE}\"...")
     with open(AREA_TYPES_DOCUMENT_FILE) as document_file:
@@ -214,7 +180,41 @@ def readAreaTypesFromFile():
         validate(instance=area_types, schema=area_schema)
 
     # Return area types list if everything went fine
-    return area_types[JSON_KEY_TYPES_LIST]
+    return area_types[JSON_KEY_GROUPS_LIST]
+
+
+def main():
+    global database
+
+    # Read area type definition from JSON file
+    area_type_groups = read_area_types()
+
+    # Connect to database
+    print(f"Connecting to database \"{DATABASE_NAME}\" at \"{DATABASE_HOST}\" as user \"{DATABASE_USER}\"...")
+    database = DatabaseConnection(host=DATABASE_HOST, database=DATABASE_NAME, user=DATABASE_USER,
+                                  password=DATABASE_PASSWORD)
+    print("Successfully connected")
+
+    # Iterate over all area type groups
+    for area_type_group in area_type_groups:
+        # Get group name
+        group_name = str(area_type_group[JSON_KEY_GROUP_NAME])
+
+        # Get area types that belong to this group
+        group_area_types = area_type_group[JSON_KEY_GROUP_TYPES]
+
+        print(f"Next group: \"{group_name}\"")
+
+        # Iterate over all area types of this group and invoke extraction
+        for area_type in group_area_types:
+            extract_area_type(area_type)
+
+        print(f"Finished group \"{group_name}\"")
+
+    print("Simplification finished")
+    print("Everything done.")
+
+    database.disconnect()
 
 
 if __name__ == '__main__':
