@@ -29,6 +29,10 @@ SOURCE_TABLES = {
 JSON_KEY_TYPES_LIST = "types"
 JSON_KEY_TYPE_NAME = "name"
 JSON_KEY_TYPE_SOURCES = "sources"
+JSON_KEY_TYPE_SOURCE_LABELS = "labels"
+JSON_KEY_TYPE_SOURCE_LABELS_ARCED = "arced"
+JSON_KEY_TYPE_SOURCE_LABELS_ZOOM_MIN = "zoom_min"
+JSON_KEY_TYPE_SOURCE_LABELS_ZOOM_MAX = "zoom_max"
 JSON_KEY_TYPE_SOURCE_TABLE_NAME = "table_name"
 JSON_KEY_TYPE_SOURCE_FILTERS = "filter_parameters"
 JSON_KEY_TYPE_SOURCE_SIMPLIFICATION = "simplification"
@@ -164,22 +168,24 @@ def write_geometries(table_name, geometries, names, zoom):
                     'name': "EPSG:4326"
                 }
             }
-            geoJSON = json.dumps(geometry)
+
+            # Stringify GeoJSON in a compact way
+            geo_json = json.dumps(geometry, separators=(',', ':'))
 
             # Check if name available
             name = "NULL"
             if id in names:
                 name = "'" + names[id] + "'"
 
-            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geoJSON}')), {zoom}, {name}, '{geoJSON}')"
+            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geo_json}')), {zoom}, {name}, '{geo_json}')"
             queryValues.append(value)
 
         # Build query string
-        queryString = f"INSERT INTO {table_name} (id, geom, zoom, name, geojson) VALUES " + (
+        query_string = f"INSERT INTO {table_name} (id, geom, zoom, name, geojson) VALUES " + (
             ",".join(queryValues)) + ";"
 
         # Insert into database
-        database.query(queryString)
+        database.query(query_string)
 
 
 def prepare_table(database, table_name):
