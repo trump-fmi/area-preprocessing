@@ -14,7 +14,7 @@ class Labelizer:
             if not geoIndex in labels:
                 continue
 
-            all_coordinates = []
+            
             outer_coordinates = []
             inner_coordinates = []
 
@@ -23,8 +23,8 @@ class Labelizer:
             
                 #line_rings = geometry['coordinates']
                 outer_coordinates = geometry['coordinates'][0]
-                if len(all_coordinates) > 1:
-                    inner_coordinates = all_coordinates[1:]  
+                if len(geometry['coordinates']) > 1:
+                    inner_coordinates = geometry['coordinates][1:]  
 
                 blackbox(geoIndex, outer_coordinates, inner_coordinates, labels[geoIndex])            
 
