@@ -8,6 +8,7 @@ from database import DatabaseConnection
 import json
 from jsonschema import validate
 import gc
+import multiprocessing as mp
 
 # File paths for area types JSON schema and document files
 AREA_TYPES_DOCUMENT_FILE = "../area-types/area_types.json"
@@ -96,38 +97,41 @@ def extract_area_type(area_type):
     geometries_dict, label_dict = extraction_rule.extract()
     print(f"Extracted {len(geometries_dict)} geometries and {len(label_dict)} labels")
 
-    print("Preprocessing data...")
+    # Multiprocessing pool
+    pool = mp.Pool(mp.cpu_count())
+    print(f"Preprocessing data on {mp.cpu_count()} cores...")
 
     # Create new Labelizer
     labelizer = Labelizer()
 
     # Iterate over all desired zoom levels
     for zoom in ZOOM_RANGE:
-        # Check if zoom is within zoom range for this area type
-        if (zoom < zoom_min) or (zoom >= zoom_max): continue
+        pool.apply(extract_for_zoom_level, args=(zoom_min, zoom_max, area_type, geometries_dict, label_dict, labelizer, simplify_geometries, table_name, zoom))
 
-        print(f"Simplifying geometries for zoom level {zoom}...")
-
-        # Check if simplification is desired
-        if simplify_geometries:
-            simplified_geometries = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom)
-        else:
-            simplified_geometries = geometries_dict
-
-        # Check if arced labels need to be calculated for this data
-        if arced_labels_needed(area_type, zoom):
-            print(f"Calculating arced labels for geometries...")
-            labelizer.labelize(simplified_geometries, label_dict)
-
-        # Write result to database
-        print(f"Writing generated data to database...")
-        write_data(table_name, simplified_geometries, label_dict, zoom)
-
-        # Force garbage collection
-        gc.collect()
-
+    pool.close()
     print(f"Postprocessing table \"{table_name}\"...")
     postprocess_table(database, table_name)
+
+
+def extract_for_zoom_level(zoom_min, zoom_max, area_type, geometries_dict, label_dict, labelizer, simplify_geometries, table_name, zoom):
+    # Check if zoom is within zoom range for this area type
+    if (zoom < zoom_min) or (zoom >= zoom_max): return
+
+    print(f"[zoom level {zoom}] Simplifying geometries...")
+    # Check if simplification is desired
+    if simplify_geometries:
+        simplified_geometries = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom)
+    else:
+        simplified_geometries = geometries_dict
+    # Check if arced labels need to be calculated for this data
+    if arced_labels_needed(area_type, zoom):
+        print(f"[zoom level {zoom}] Calculating arced labels for geometries...")
+        labelizer.labelize(simplified_geometries, label_dict)
+    # Write result to database
+    print(f"[zoom level {zoom}] Writing generated data to database...")
+    write_data(table_name, simplified_geometries, label_dict, zoom)
+    # Force garbage collection
+    gc.collect()
 
 
 # Checks if calculating arced labels is necessary for a given area type at a given zoom level
