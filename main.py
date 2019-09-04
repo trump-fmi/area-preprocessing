@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from ArcLabel import ArcLabel
 from ExtractionRule import ExtractionRule
 from Labelizer import Labelizer
 from NoSimplification import NoSimplification
@@ -93,8 +94,8 @@ def extract_area_type(area_type):
     # Create extraction rule and use it to extract geometries and labels
     print("Extracting geometries...")
     extraction_rule = ExtractionRule(filter_conditions_list)
-    geometries_dict, label_dict = extraction_rule.extract()
-    print(f"Extracted {len(geometries_dict)} geometries and {len(label_dict)} labels")
+    geometries_dict, labels_dict = extraction_rule.extract()
+    print(f"Extracted {len(geometries_dict)} geometries and {len(labels_dict)} labels")
 
     print("Preprocessing data...")
 
@@ -117,11 +118,11 @@ def extract_area_type(area_type):
         # Check if arced labels need to be calculated for this data
         if arced_labels_needed(area_type, zoom):
             print(f"Calculating arced labels for geometries...")
-            labelizer.labelize(simplified_geometries, label_dict)
+            labels_dict = labelizer.labelize(simplified_geometries, labels_dict)
 
         # Write result to database
         print(f"Writing generated data to database...")
-        write_data(table_name, simplified_geometries, label_dict, zoom)
+        write_data(table_name, simplified_geometries, labels_dict, zoom)
 
         # Force garbage collection
         gc.collect()
@@ -145,7 +146,7 @@ def arced_labels_needed(area_type, zoom):
     return arced and ((zoom >= zoom_min) and (zoom < zoom_max))
 
 
-def write_data(table_name, geometries, names, zoom):
+def write_data(table_name, geometries, labels_dict, zoom):
     global database
 
     geometry_items = list(geometries.items())
@@ -167,16 +168,29 @@ def write_data(table_name, geometries, names, zoom):
             # Stringify GeoJSON in a compact way
             geo_json = json.dumps(geometry, separators=(',', ':'))
 
-            # Check if name available
-            label = "NULL"
-            if id in names:
-                label = "'" + names[id] + "'"
+            # Check if there is a label available for the current geometry
+            if id in labels_dict:
+                label_obj = labels_dict[id]
 
-            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geo_json}')), {zoom}, '{geo_json}', {label})"
+                # Check if label obj is an ArcLabel
+                if isinstance(label_obj, ArcLabel):
+                    # ArcLabel
+                    label = label_obj
+                else:
+                    # Normal label (set text and remaining ArcLabel properties to default values)
+                    label = ArcLabel(label_obj)
+            else:
+                # No label (set all ArcLabel properties to default values)
+                label = ArcLabel(None)
+
+            # Generate sql params from label object
+            label_sql = label.to_sql_string()
+
+            value = f"({id},ST_Envelope(ST_GeomFromGeoJSON('{geo_json}')),{zoom},'{geo_json}',{label_sql})"
             query_values.append(value)
 
         # Build query string
-        query_string = f"INSERT INTO {table_name} (id, geom, zoom, geojson, label) VALUES " + (
+        query_string = f"INSERT INTO {table_name} (id,geom,zoom,geojson,label,label_center,start_angle,end_angle,inner_radius,outer_radius) VALUES " + (
             ",".join(query_values)) + ";"
 
         # Insert into database
