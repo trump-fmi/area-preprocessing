@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from ExtractionRule import ExtractionRule
+from Labelizer import Labelizer
 from NoSimplification import NoSimplification
 from SimpleSimplification import SimpleSimplification
 from BlackBoxSimplification import BlackBoxSimplification
@@ -46,8 +47,13 @@ TABLE_PRE_QUERIES = ["DROP TABLE IF EXISTS {0};",
                          id INT NOT NULL,
                          geom GEOMETRY NOT NULL,
                          zoom INT DEFAULT 0,
-                         name TEXT DEFAULT NULL,
                          geojson TEXT DEFAULT NULL,
+                         label TEXT DEFAULT NULL,
+                         label_center GEOMETRY DEFAULT NULL,
+                         start_angle FLOAT DEFAULT 0,
+                         end_angle FLOAT DEFAULT 0,
+                         inner_radius FLOAT DEFAULT 0,
+                         outer_radius FLOAT DEFAULT 0,
                          CONSTRAINT {0}_unique_id UNIQUE (id, zoom)
                      );"""]
 
@@ -84,13 +90,16 @@ def extract_area_type(area_type):
     prepare_table(database, table_name)
     print(f"Table prepared")
 
-    # Create extraction rule and use it to extract geometries and names
+    # Create extraction rule and use it to extract geometries and labels
     print("Extracting geometries...")
     extraction_rule = ExtractionRule(filter_conditions_list)
-    geometries_dict, names_dict = extraction_rule.extract()
-    print(f"Extracted {len(geometries_dict)} geometries and {len(names_dict)} names")
+    geometries_dict, label_dict = extraction_rule.extract()
+    print(f"Extracted {len(geometries_dict)} geometries and {len(label_dict)} labels")
 
     print("Preprocessing data...")
+
+    # Create new Labelizer
+    labelizer = Labelizer()
 
     # Iterate over all desired zoom levels
     for zoom in ZOOM_RANGE:
@@ -101,13 +110,18 @@ def extract_area_type(area_type):
 
         # Check if simplification is desired
         if simplify_geometries:
-            processed_result = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom)
+            simplified_geometries = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom)
         else:
-            processed_result = geometries_dict
+            simplified_geometries = geometries_dict
+
+        # Check if arced labels need to be calculated for this data
+        if arced_labels_needed(area_type, zoom):
+            print(f"Calculating arced labels for geometries...")
+            labelizer.labelize(simplified_geometries, label_dict)
 
         # Write result to database
-        print(f"Writing simplified geometries for zoom level {zoom} to database...")
-        write_geometries(table_name, processed_result, names_dict, zoom)
+        print(f"Writing generated data to database...")
+        write_data(table_name, simplified_geometries, label_dict, zoom)
 
         # Force garbage collection
         gc.collect()
@@ -116,7 +130,22 @@ def extract_area_type(area_type):
     postprocess_table(database, table_name)
 
 
-def write_geometries(table_name, geometries, names, zoom):
+# Checks if calculating arced labels is necessary for a given area type at a given zoom level
+def arced_labels_needed(area_type, zoom):
+    # Check if label options provided
+    if JSON_KEY_GROUP_TYPE_LABELS not in area_type: return False
+
+    # Extract label options
+    label_options = area_type[JSON_KEY_GROUP_TYPE_LABELS]
+    arced = label_options[JSON_KEY_GROUP_TYPE_LABELS_ARCED]
+    zoom_min = label_options[JSON_KEY_GROUP_TYPE_LABELS_ZOOM_MIN]
+    zoom_max = label_options[JSON_KEY_GROUP_TYPE_LABELS_ZOOM_MAX]
+
+    # Check if labels should be arced and for zoom levels
+    return arced and ((zoom >= zoom_min) and (zoom < zoom_max))
+
+
+def write_data(table_name, geometries, names, zoom):
     global database
 
     geometry_items = list(geometries.items())
@@ -124,7 +153,7 @@ def write_geometries(table_name, geometries, names, zoom):
     for i in range(0, len(geometry_items), WRITE_BATCH_SIZE):
         chunk_list = geometry_items[i:i + WRITE_BATCH_SIZE]
 
-        queryValues = []
+        query_values = []
 
         for id, geometry in chunk_list:
             # Extend geometry for SRID
@@ -139,16 +168,16 @@ def write_geometries(table_name, geometries, names, zoom):
             geo_json = json.dumps(geometry, separators=(',', ':'))
 
             # Check if name available
-            name = "NULL"
+            label = "NULL"
             if id in names:
-                name = "'" + names[id] + "'"
+                label = "'" + names[id] + "'"
 
-            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geo_json}')), {zoom}, {name}, '{geo_json}')"
-            queryValues.append(value)
+            value = f"({id}, ST_Envelope(ST_GeomFromGeoJSON('{geo_json}')), {zoom}, '{geo_json}', {label})"
+            query_values.append(value)
 
         # Build query string
-        query_string = f"INSERT INTO {table_name} (id, geom, zoom, name, geojson) VALUES " + (
-            ",".join(queryValues)) + ";"
+        query_string = f"INSERT INTO {table_name} (id, geom, zoom, geojson, label) VALUES " + (
+            ",".join(query_values)) + ";"
 
         # Insert into database
         database.query(query_string)
