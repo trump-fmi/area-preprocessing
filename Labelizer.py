@@ -12,8 +12,9 @@ class Labelizer:
 
     def labeling(self, geometries, labels):
 
+        # TODO: Only a stub, replace if blackbox available
         if len(geometries) > 0:
-            return {}
+            return {'7403': ArcLabel("testlabel", [8.234234, 48.23423], 3.14, 3.14 / 2, 0.06, 0.08)}
 
         for geoIndex, geometry in geometries.items():
 
