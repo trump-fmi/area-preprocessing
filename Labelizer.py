@@ -8,8 +8,6 @@ class Labelizer:
         arc_label_dict = {}
 
         for id, geometry in geometry_dict.items():
-            print(id)
-
             if id in label_dict:
                 label = label_dict[id]
 
