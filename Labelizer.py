@@ -1,13 +1,87 @@
+from subprocess import run, PIPE
+from sys import exit
 from ArcLabel import ArcLabel
-
 
 class Labelizer:
 
     def __init__(self):
-        pass
+        self.output_dic = {}
 
-    # Returns: Dict (geometry id --> ArcLabel object)
-    def labelize(self, geometry_dict, label_dict):
-        arc_label_dict = {'7403': ArcLabel("testlabel", [8.234234, 48.23423], 3.14, 3.14 / 2, 0.06, 0.08)}
+    def labeling(self, geometries, labels):
 
-        return arc_label_dict
+        for geoIndex, geometry in geometries.items():
+
+            if not geoIndex in labels:
+                continue
+
+            all_coordinates = []
+            outer_coordinates = []
+            inner_coordinates = []
+
+            # Geometry is a polygon
+            if geometry['type'] == 'Polygon':
+            
+                #line_rings = geometry['coordinates']
+                outer_coordinates = geometry['coordinates'][0]
+                if len(all_coordinates) > 1:
+                    inner_coordinates = all_coordinates[1:]  
+
+                blackbox(geoIndex, outer_coordinates, inner_coordinates, labels[geoIndex])            
+
+            # Geometry is a multi polygon
+            elif geometry['type'] == 'MultiPolygon':
+                polygon = geometry['coordinates'][0]               
+
+                outer_coordinates = polygon[0]
+                if len(polygon) > 1:
+                    inner_coordinates = polygon[1:] 
+
+                blackbox(geoIndex, outer_coordinates, inner_coordinates, labels[geoIndex])    
+
+            else:
+                print(f"Other geometry: {geometry['type']}")
+                # raise Exception("Invalid geometry type")
+
+        return self.output_dic
+    
+
+            
+            
+            
+
+
+    def blackbox(self, geoIndex, outer, inner, labelName):
+        
+        #Estimate Height/Length
+        aspect = str(1/len(labelName))
+        
+        input_string = aspect+"\n"
+
+        for coordinate in outer:
+            input_string+= str(coordinate[0]) + " " + str(coordinate[1]) + " "
+        input_string+="\n"
+        if len(inner) > 0:
+            for hole in inner:
+                input_string+="i\n"
+                for coordinate in hole:
+                    input_string+= str(coordinate[0]) + " " + str(coordinate[1]) + " "
+                input_string+="\n"
+
+        input_string+="s\n"    
+
+        # run black box
+        label_process = run(["../area-labeling/standalone_lib/bin/bin/labeling"], stdout=PIPE, input=input_string, encoding='ascii')
+
+        if label_process.returncode is not 0:
+            print("labeling command failed.")
+            self.output_dic[geoIndex] = None
+
+        label_output = label_process.stdout
+        result = label_output.split()
+
+        
+        center = [float(result[0]),float(result[1])]        
+        self.output_dic[geoIndex] = ArcLabel(labelName, center, float(result[4]), float(result[5]), float(result[2]), float(result[3]))
+
+       
+           
