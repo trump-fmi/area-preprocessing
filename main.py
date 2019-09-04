@@ -136,7 +136,7 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
         labels_dict = labelizer.labeling(simplified_geometries, labels_dict)
 
     # Write result to database
-    print(f"Writing generated data to database...")
+    print(f"Writing data to database...")
     write_data(table_name, simplified_geometries, labels_dict, zoom_level)
 
     # Force garbage collection

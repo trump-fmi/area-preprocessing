@@ -12,7 +12,7 @@ class ArcLabel:
         sql_builder = []
         sql_builder.append("NULL" if self.text is None else "'" + self.text + "'")
         sql_builder.append(
-            "NULL" if self.center is None else "'[" + str(self.center[0]) + "," + str(self.center[1]) + "]'")
+            "'null'" if self.center is None else "'[" + str(self.center[0]) + "," + str(self.center[1]) + "]'")
         sql_builder.append(str(self.start_angle))
         sql_builder.append(str(self.end_angle))
         sql_builder.append(str(self.inner_radius))
