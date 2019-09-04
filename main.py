@@ -133,7 +133,7 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
     # Check if arced labels need to be calculated for this data
     if arced_labels_needed(area_type, zoom_level):
         print(f"Calculating arced labels for geometries...")
-        labels_dict = labelizer.labelize(simplified_geometries, labels_dict)
+        labels_dict = labelizer.labeling(simplified_geometries, labels_dict)
 
     # Write result to database
     print(f"Writing generated data to database...")
