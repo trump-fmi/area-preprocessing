@@ -19,8 +19,8 @@ class ExtractionRule:
         # Dict for all extracted geometries
         geometries_dict = {}
 
-        # Dict for all extracted names
-        names_dict = {}
+        # Dict for all extracted labels
+        labels_dict = {}
 
         # Stores all features that were extracted by the various filter conditions
         extracted_features = []
@@ -80,19 +80,19 @@ class ExtractionRule:
             if not geometry_type in GEOMETRIES_WHITELIST:
                 continue
 
-            # Get feature name if available
-            name = None
+            # Get name tag of feature as label if available
+            label = None
             if "properties" in feature:
                 if "name" in feature["properties"]:
-                    name = feature["properties"]["name"]
+                    label = feature["properties"]["name"]
 
-            # If available, add sanitized name to name dict
-            if name is not None:
-                name = name.replace("'", "").replace("\"", "").replace("\n", "")
-                names_dict[id] = name
+            # If available, add sanitized label to label dict
+            if label is not None:
+                label = label.replace("'", "").replace("\"", "").replace("\n", "")
+                labels_dict[id] = label
 
             # Add geometry to geometry dict
             geometries_dict[id] = geometry
 
         # Return resulting list of geometries
-        return geometries_dict, names_dict
+        return geometries_dict, labels_dict
