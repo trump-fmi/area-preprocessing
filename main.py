@@ -52,10 +52,10 @@ TABLE_PRE_QUERIES = ["DROP TABLE IF EXISTS {0};",
                          geojson TEXT DEFAULT NULL,
                          label TEXT DEFAULT NULL,
                          label_center TEXT DEFAULT NULL,
-                         start_angle FLOAT DEFAULT 0,
-                         end_angle FLOAT DEFAULT 0,
-                         inner_radius FLOAT DEFAULT 0,
-                         outer_radius FLOAT DEFAULT 0,
+                         start_angle FLOAT DEFAULT NULL,
+                         end_angle FLOAT DEFAULT NULL,
+                         inner_radius FLOAT DEFAULT NULL,
+                         outer_radius FLOAT DEFAULT NULL,
                          CONSTRAINT {0}_unique_id UNIQUE (id, zoom)
                      );"""]
 
