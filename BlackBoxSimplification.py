@@ -73,7 +73,11 @@ class BlackBoxSimplification(Simplification):
         ###
         # match borders to their geometries
         ###
-
+        if len(simplified_geometries) != len(all_geometries):
+            print("simplified border count does not match original border count")
+            exit()
+        
+        # loop through geometries and put simplified borders there
 
         return geometries
 
@@ -115,7 +119,9 @@ class BlackBoxSimplification(Simplification):
         # drop first point of new segment to avoid double points
         del new[0]
         del new[0]
+        existing.append(new)
 
+        return ' '.join(existing)
 
     def blackBox(self, constraint_points, coordinates):
         # Put input string together
