@@ -73,7 +73,14 @@ class Labelizer:
             self.output_dic[geoIndex] = None
 
         label_output = label_process.stdout
+
         result = label_output.split()
+
+        if len(result) < 6:
+            print("Fail :-(")
+            return
+
+        print("Subber")
 
         center = [float(result[0]), float(result[1])]
         self.output_dic[geoIndex] = ArcLabel(labelName, center, float(result[4]), float(result[5]), float(result[2]),
