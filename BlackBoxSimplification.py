@@ -54,17 +54,70 @@ class BlackBoxSimplification(Simplification):
 
         print("Running black box...")
         #simplified_geometries = self.blackBox([[9.1067832, 48.7448467], [9.2190092, 48.6600964], [8.8484828, 48.6103653]], all_coordinates)
-        simplified_geometries = self.blackBox([], all_coordinates)      
+        blackbox_out, xfree_out = self.blackBox([], all_coordinates)      
 
+        ###
         # put simplified border parts back to borders
-        
+        ###
+        border_parts = blackbox_out.split('\n')
+        del border_parts[0] # remove constraint points
+        del border_parts[0] # remove line count
+        simplified_geometries = []
 
+        # "jump" to mappings and handle them
+        number_of_mappings = xfree_out[1] + 1
+        for current_mapping in range(number_of_mappings, xfree_out[number_of_mappings] + 1):
+            simplified_geometries.append(resolveMapping(current_mapping, border_parts))
+
+
+        ###
         # match borders to their geometries
+        ###
+
 
         return geometries
 
-    def blackBox(self, constraint_points, coordinates):
 
+    def resolveMapping(mapping, border_parts):
+        retVal = ""
+        values = mapping.split(' ')
+        count = 0
+        while count < len(values):
+            tmp = border_parts[mapping[count]]
+            count += 1
+            if mapping[count] == 0:
+                retVal = addPart(retVal, tmp, false)
+            elif mapping[count] == 1:
+                retVal = addPart(retVal, tmp, true)
+            count += 1
+        return retVal
+
+
+    # add new part without having double points
+    def addPart(existing, new, reverse):
+        existing = existing.split(' ')
+        new = new.split(' ')
+        
+        if reverse:
+            tmp = []
+            count = len(new) - 2 # point to second last element in new
+            while count > 0:
+                tmp.append(new[count])
+                count += 1
+                tmp.append(new[count])
+                count -= 3
+            new = tmp
+        
+        if existing[len(existing)-2] != new[0] or existing[len(existing-1)] != new[1]:
+            print("endpoint of existing part different from startpoint of new part")
+            exit()
+        
+        # drop first point of new segment to avoid double points
+        del new[0]
+        del new[0]
+
+
+    def blackBox(self, constraint_points, coordinates):
         # Put input string together
         input_string = " ".join(map(lambda t: " ".join(map(str, t)), constraint_points))
         input_string += "\n"
@@ -92,4 +145,4 @@ class BlackBoxSimplification(Simplification):
         topo_output = topo_process.stdout
 
 
-        return topo_output
+        return topo_output, xfree_output.split('\n')
