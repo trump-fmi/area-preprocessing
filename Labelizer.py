@@ -2,7 +2,7 @@ from subprocess import run, PIPE
 from sys import exit
 from ArcLabel import ArcLabel
 
-BLACKBOX_PATH = "../area-labeling/standalone_lib/bin/labeling"
+BLACKBOX_PATH = "../area_labeling/standalone_lib/bin/labeling"
 
 
 class Labelizer:
