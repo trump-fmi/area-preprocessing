@@ -2,7 +2,7 @@ from subprocess import run, PIPE
 from sys import exit
 from ArcLabel import ArcLabel
 
-BLACKBOX_PATH = "../area-labeling/standalone_lib/bin/bin/labeling"
+BLACKBOX_PATH = "../area-labeling/standalone_lib/bin/labeling"
 
 
 class Labelizer:
@@ -11,10 +11,6 @@ class Labelizer:
         self.output_dic = {}
 
     def labeling(self, geometries, labels):
-
-        # TODO: Only a stub, replace if blackbox available
-        if len(geometries) > 0:
-            return {'7403': ArcLabel("testlabel", [8.234234, 48.23423], 3.14, 3.14 / 2, 0.06, 0.08)}
 
         for geoIndex, geometry in geometries.items():
 
