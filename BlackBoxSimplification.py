@@ -78,6 +78,17 @@ class BlackBoxSimplification(Simplification):
             exit()
         
         # loop through geometries and put simplified borders there
+        current_position = -1
+
+        for geometry, coordinates in zip(all_geometries, all_coordinates):
+            current_position += 1
+            
+            if geometry['type'] == 'LineString':
+                geometry['coordinates'].append(coordinates)
+            
+            elif geometry['type'] == 'MultiLineString':
+                print (geometry)
+                exit()
 
         return geometries
 
