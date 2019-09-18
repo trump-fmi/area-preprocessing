@@ -2,7 +2,7 @@ from subprocess import run, PIPE
 from sys import exit
 from ArcLabel import ArcLabel
 
-BLACKBOX_PATH = "../area_labeling/standalone_lib/bin/labeling"
+BLACKBOX_PATH = "../area_labeling/standalone_lib/build/bin/labeling"
 
 
 class Labelizer:
@@ -65,7 +65,7 @@ class Labelizer:
         input_string += "s\n"
 
         # run black box
-        label_process = run([BLACKBOX_PATH], stdout=PIPE, input=input_string,
+        label_process = run([BLACKBOX_PATH, "-s"], stdout=PIPE, input=input_string,
                             encoding='ascii')
 
         if label_process.returncode is not 0:
