@@ -28,6 +28,9 @@ SOURCE_TABLES = {
     "polygons": "planet_osm_polygon"
 }
 
+# Coordinate projection of the generated output
+OUTPUT_PROJECTION = "EPSG:3857"
+
 # JSON key names of the area types definition
 JSON_KEY_GROUPS_LIST = "groups"
 JSON_KEY_GROUP_NAME = "name"
@@ -126,7 +129,8 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
 
     # Check if simplification is desired
     if simplify_geometries:
-        simplified_geometries = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict, zoom=zoom_level)
+        simplified_geometries = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict,
+                                                        zoom=zoom_level)
     else:
         simplified_geometries = geometries_dict
 
@@ -175,7 +179,7 @@ def write_data(table_name, geometries, labels_dict, zoom):
             geometry['crs'] = {
                 'type': 'name',
                 'properties': {
-                    'name': "EPSG:4326"
+                    'name': OUTPUT_PROJECTION
                 }
             }
 

@@ -8,6 +8,7 @@
 
 # ****** Name of temp files ******
 TEMP_FILTERED="filtered.osm"
+TEMP_CONVERTED="converted.json"
 # ********************************
 
 # Increase node RAM size
@@ -53,7 +54,11 @@ osmfilter "${HASHED_O5M_PATH}" -o="${TEMP_FILTERED}" "$@"
 
 # Convert result to GeoJSON
 echo "Converting OSM data to GeoJSON..."
-osmtogeojson -m "${TEMP_FILTERED}" > "${OUTPUT_FILE}"
+osmtogeojson -m "${TEMP_FILTERED}" > "${TEMP_CONVERTED}"
+
+# Convert result to GeoJSON
+echo "Transforming coordinates to target projection..."
+cat "${TEMP_CONVERTED}" | reproject --use-epsg-io --from=EPSG:4326 --to=EPSG:3857 > "${OUTPUT_FILE}"
 
 # Remove all temp files
 echo "Cleaning up..."

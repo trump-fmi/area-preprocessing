@@ -7,7 +7,6 @@ PIPELINE_SCRIPT_NAME = "run_pipeline.sh"
 INPUT_FILE_PATH = "../../source_data.osm.pbf"
 OUTPUT_FILE_NAME = "result.json"
 GEOMETRIES_WHITELIST = ["LineString", "MultiLineString", "Polygon", "MultiPolygon"]
-TARGET_PROJECTION = 4326
 # ****************************
 
 
