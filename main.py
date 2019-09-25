@@ -204,7 +204,7 @@ def write_data(table_name, geometries, labels_dict, zoom):
             # Generate sql params from label object
             label_sql = label.to_sql_string()
 
-            value = f"({id},ST_Envelope(ST_GeomFromGeoJSON('{geo_json}')),{zoom},'{geo_json}',{label_sql})"
+            value = f"({id},ST_Envelope(ST_TRANSFORM(ST_GeomFromGeoJSON('{geo_json}'),4326)),{zoom},'{geo_json}',{label_sql})"
             query_values.append(value)
 
         # Build query string
