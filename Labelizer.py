@@ -48,7 +48,7 @@ class Labelizer:
 
     def blackbox(self, geoIndex, outer, inner, labelName):
         # Estimate Height/Length
-        aspect = str(1 / len(labelName))
+        aspect = str(1 / (len(labelName) * 0.61))
 
         input_string = aspect + "\n"
 
