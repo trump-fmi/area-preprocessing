@@ -13,7 +13,7 @@ AREA_TYPES_DOCUMENT_FILE = "../area-types/area_types.json"
 AREA_TYPES_SCHEMA_FILE = "../area-types/area_types_schema.json"
 
 # Database settings
-DATABASE_HOST = "localhost"
+DATABASE_HOST = "172.19.0.2"
 DATABASE_NAME = "gis"
 DATABASE_USER = "osm"
 DATABASE_PASSWORD = None
