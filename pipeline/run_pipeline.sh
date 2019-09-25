@@ -63,6 +63,7 @@ cat "${TEMP_CONVERTED}" | reproject --use-epsg-io --from=EPSG:4326 --to=EPSG:385
 # Remove all temp files
 echo "Cleaning up..."
 rm -f "${TEMP_FILTERED}"
+rm -f "${TEMP_CONVERTED}"
 
 echo "Successfully done."
 
