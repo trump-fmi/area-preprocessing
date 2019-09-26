@@ -75,7 +75,7 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 SIMPLIFICATION = NoSimplification()
 
 # Number of geometries to write within one database query
-WRITE_BATCH_SIZE = 1
+WRITE_BATCH_SIZE = 30
 
 # Database instance
 database = None
