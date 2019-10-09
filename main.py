@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 from ArcLabel import ArcLabel
-from ExtractionRule import ExtractionRule
+from ExtractionRule import INPUT_FILE_PATH, ExtractionRule
 from Labelizer import Labelizer
 from NoSimplification import NoSimplification
 from SimpleSimplification import SimpleSimplification
 from BlackBoxSimplification import BlackBoxSimplification
 from database import DatabaseConnection
+import os
 import json
 from jsonschema import validate
 import gc
+import psutil
+import math
 import multiprocessing as mp
 
 # File paths for area types JSON schema and document files
@@ -90,19 +93,27 @@ def extract_area_type(area_type):
     zoom_min = float(area_type[JSON_KEY_GROUP_TYPE_ZOOM_MIN])
     zoom_max = float(area_type[JSON_KEY_GROUP_TYPE_ZOOM_MAX])
 
+    input_size = os.path.getsize(INPUT_FILE_PATH)
+    needed_memory = input_size * 5
+    available_memory = psutil.virtual_memory().available
+    possible_threads = max(1,min(math.floor(available_memory / needed_memory), mp.cpu_count()))
+    print(f"Input size is {int(input_size / 1024 / 1024)}MiB, needs {int(needed_memory / 1024 / 1024)}MiB memory"
+          f" (available: {int(available_memory / 1024 / 1024)}MiB). -> Limiting to {int(available_memory / needed_memory)} threads")
+
     print(f"Preparing table \"{table_name}\"...")
     prepare_table(database, table_name)
     print(f"Table prepared")
 
     # Create extraction rule and use it to extract geometries and labels
     print("Extracting geometries...")
-    extraction_rule = ExtractionRule(filter_parameters)
+    extraction_rule = ExtractionRule(filter_parameters, possible_threads)
     geometries_dict, labels_dict = extraction_rule.extract()
     print(f"Extracted {len(geometries_dict)} geometries and {len(labels_dict)} labels")
 
+
     # Multiprocessing pool
-    pool = mp.Pool(mp.cpu_count())
-    print(f"Preprocessing data on {mp.cpu_count()} cores...")
+    pool = mp.Pool(processes=possible_threads)
+    print(f"Preprocessing data on {possible_threads} threads...")
 
     # Iterate over all desired zoom levels
     for zoom in ZOOM_RANGE:

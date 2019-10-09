@@ -1,9 +1,11 @@
 import os
 import json
+import multiprocessing as mp
 
 # ********** Config **********
 PIPELINE_DIR = "pipeline"
 PIPELINE_SCRIPT_NAME = "run_pipeline.sh"
+CONVERT_SCRIPT_NAME = "convert.sh"
 INPUT_FILE_PATH = "../../source_data.osm.pbf"
 OUTPUT_FILE_NAME = "result.json"
 GEOMETRIES_WHITELIST = ["LineString", "MultiLineString", "Polygon", "MultiPolygon"]
@@ -11,8 +13,23 @@ GEOMETRIES_WHITELIST = ["LineString", "MultiLineString", "Polygon", "MultiPolygo
 
 
 class ExtractionRule:
-    def __init__(self, filter_conditions_list):
+    def __init__(self, filter_conditions_list, thread_count):
         self.filter_conditions_list = filter_conditions_list
+        self.thread_count = thread_count
+        self.extracted_features = mp.Manager().list()
+
+    def call_convert_script(self):
+        # Build pipeline script call with parameters
+        script_path = os.path.join(PIPELINE_DIR, CONVERT_SCRIPT_NAME)
+        script_call = f"{script_path} \"{INPUT_FILE_PATH}\""
+
+        # Execute script
+        return_value = os.system(script_call)
+
+        # Check script return value
+        if return_value != 0:
+            print("Error: Convert script execution failed.")
+            exit(-1)
 
     def extract(self):
         # Dict for all extracted geometries
@@ -21,45 +38,32 @@ class ExtractionRule:
         # Dict for all extracted labels
         labels_dict = {}
 
-        # Stores all features that were extracted by the various filter conditions
-        extracted_features = []
+        # Convert input file to .o5m if needed
+        self.call_convert_script()
 
-        print(f"There are {len(self.filter_conditions_list)} filter conditions")
+        print(f"There are {len(self.filter_conditions_list)} filter conditions. Extracting with {self.thread_count} threads.")
+
+
+        # Multiprocessing pool
+        pool = mp.Pool(processes=self.thread_count)
+        print(f"Preprocessing data on {self.thread_count} threads...")
 
         # Iterate over the list of filter conditions
         for filter_condition in self.filter_conditions_list:
+            pool.apply_async(self.extract_with_pipeline, args=[filter_condition])
 
-            print(f"Next filter condition: {filter_condition}")
+        # Wait for all threads to finish
+        pool.close()
+        pool.join()
 
-            # Build pipeline script call with parameters
-            script_path = os.path.join(PIPELINE_DIR, PIPELINE_SCRIPT_NAME)
-            script_call = script_path + f" \"{INPUT_FILE_PATH}\" \"{OUTPUT_FILE_NAME}\" {filter_condition}"
+        # Sanity check
+        if len(self.extracted_features) < 1:
+            print("Error: Reading pipeline output failed.")
+            exit(-1)
 
-            # Execute script
-            return_value = os.system(script_call)
-
-            # Check script return value
-            if return_value != 0:
-                print("Error: Pipeline script execution failed.")
-                exit(-1)
-
-            # Read in extracted GeoJSON data
-            output_file_path = os.path.join(PIPELINE_DIR, OUTPUT_FILE_NAME)
-            with open(output_file_path) as json_file:
-                # Retrieve features
-                loaded_features = json.load(json_file)["features"]
-                print(f"Filter condition resulted in {len(loaded_features)} features")
-
-                # Add features to list of all extracted features
-                extracted_features.extend(loaded_features)
-
-            # Sanity check
-            if len(extracted_features) < 1:
-                print("Error: Reading pipeline output failed.")
-                exit(-1)
 
         # Iterate over all extracted features
-        for feature in extracted_features:
+        for feature in self.extracted_features:
 
             # Get feature id and extract number
             id = feature["id"]
@@ -95,3 +99,15 @@ class ExtractionRule:
 
         # Return resulting list of geometries
         return geometries_dict, labels_dict
+
+    def extract_with_pipeline(self, filter_condition):
+        print(f"Next filter condition: {filter_condition}")
+        script_path = os.path.join(PIPELINE_DIR, PIPELINE_SCRIPT_NAME)
+        pipeline_process = os.popen(f"{script_path} {INPUT_FILE_PATH} {filter_condition}")
+        pipeline_output = pipeline_process.read()
+        if pipeline_process.close() is not None:
+            print("Error: Pipeline script execution failed.")
+        loaded_features = json.loads(pipeline_output)["features"]
+        print(f"Filter condition resulted in {len(loaded_features)} features")
+        # Add features to list of all extracted features
+        self.extracted_features.extend(loaded_features)
