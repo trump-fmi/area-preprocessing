@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # ************ Usage *************
-# 1st parameter: Input file to use (*.osm or *.pbf)
+# 1st parameter: Instance name for logging
+# 2nd parameter: Converted input file to use (*.o5m)
 # Following parameters: Osmfilter arguments
 # ********************************
 
@@ -13,33 +14,26 @@ cd "${0%/*}"
 
 # Uncomment for windows
 # cd pipeline
+INSTANCE="$1"
+INPUT_FILE="$2"
+TEMP_FILTERED="${INPUT_FILE}-filtered-$RANDOM.osm"
+OSMFILTER_TEMPFILE="${INPUT_FILE}-osmfilter-temp-$RANDOM.osm"
 
-INPUT_FILE="$1"
-HASHED_O5M_PATH="$(sha256sum "$INPUT_FILE" | cut -d" " -f 1 | cut -c-10 ).o5m"
-TEMP_FILTERED="${HASHED_O5M_PATH}-filtered-$RANDOM.osm"
+# Discard first two command line parameters
+shift 2
 
-# Discard first command line parameter
-shift 1
-
-echo "Started extraction pipeline" 1>&2
-echo "---------------------------------------------" 1>&2
-echo "Input file: \"${INPUT_FILE}\"" 1>&2
-echo "Hashed Filename: \"{HASHED_O5M_PATH}\"" 1>&2
-echo "Filter parameters: \"$@\"" 1>&2
+echo "[$INSTANCE] Started extraction pipeline" 1>&2
+echo "[$INSTANCE] Input file: \"${INPUT_FILE}\"" 1>&2
 
 # Filter OSM data
-echo "Filtering for requested OSM data..." 1>&2
-osmfilter "${HASHED_O5M_PATH}" -o="${TEMP_FILTERED}" "$@"
-# > "$TEMP_FILTERED"
+echo "[$INSTANCE] Filtering for requested OSM data with parameters: \"$@\"" 1>&2
+osmfilter "${INPUT_FILE}" -o="${TEMP_FILTERED}" -t="${OSMFILTER_TEMPFILE}" "$@"
 
 # Convert result to GeoJSON
-echo "Converting OSM data to GeoJSON and transforming to target projection..." 1>&2
+echo "[$INSTANCE] Converting OSM data to GeoJSON and transforming to target projection..." 1>&2
 osmtogeojson -m "${TEMP_FILTERED}" | reproject --use-epsg-io --from=EPSG:4326 --to=EPSG:3857
 
 # Remove all temp files
-echo "Cleaning up..." 1>&2
-rm -f "${TEMP_FILTERED}" osmfilter_tempfile*
+rm -f "${TEMP_FILTERED}" "${OSMFILTER_TEMPFILE}"
 
-echo "Successfully done." 1>&2
-
-exit 0
+echo "[$INSTANCE] Successfully done." 1>&2

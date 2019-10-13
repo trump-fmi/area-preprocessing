@@ -78,7 +78,7 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 SIMPLIFICATION = NoSimplification()
 
 # Number of geometries to write within one database query
-WRITE_BATCH_SIZE = 30
+WRITE_BATCH_SIZE = 1000
 
 # Database instance
 database = None
@@ -97,35 +97,37 @@ def extract_area_type(area_type):
     needed_memory = input_size * 5
     available_memory = psutil.virtual_memory().available
     possible_threads = max(1,min(math.floor(available_memory / needed_memory), mp.cpu_count()))
-    print(f"Input size is {int(input_size / 1024 / 1024)}MiB, needs {int(needed_memory / 1024 / 1024)}MiB memory"
+    print(f"[{table_name}] Input size is {int(input_size / 1024 / 1024)}MiB, needs {int(needed_memory / 1024 / 1024)}MiB memory"
           f" (available: {int(available_memory / 1024 / 1024)}MiB). -> Limiting to {int(available_memory / needed_memory)} threads")
 
-    print(f"Preparing table \"{table_name}\"...")
     prepare_table(database, table_name)
-    print(f"Table prepared")
+    print(f"[{table_name}] Table prepared")
 
     # Create extraction rule and use it to extract geometries and labels
-    print("Extracting geometries...")
-    extraction_rule = ExtractionRule(filter_parameters, possible_threads)
+    print("[{table_name}] Extracting geometries...")
+    extraction_rule = ExtractionRule(table_name, filter_parameters, possible_threads)
     geometries_dict, labels_dict = extraction_rule.extract()
-    print(f"Extracted {len(geometries_dict)} geometries and {len(labels_dict)} labels")
+    print(f"[{table_name}] Extracted {len(geometries_dict)} geometries and {len(labels_dict)} labels")
 
 
     # Multiprocessing pool
     pool = mp.Pool(processes=possible_threads)
-    print(f"Preprocessing data on {possible_threads} threads...")
+    print(f"[{table_name}] Preprocessing data on {possible_threads} threads...")
 
     # Iterate over all desired zoom levels
     for zoom in ZOOM_RANGE:
         # Check if zoom is within zoom range for this area type
-        if (zoom < zoom_min) or (zoom >= zoom_max): continue
+        if (zoom < zoom_min) or (zoom >= zoom_max):
+            continue
 
-        # pool.apply(process_for_zoom_level, args=(area_type, geometries_dict, labels_dict, table_name, zoom))
-        process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, zoom)
+        pool.apply_async(process_for_zoom_level, args=(area_type, geometries_dict, labels_dict, table_name, zoom))
+        #process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, zoom)
 
+    # Wait for all threads to finish
     pool.close()
+    pool.join()
 
-    print(f"Postprocessing table \"{table_name}\"...")
+    print(f"[{table_name}] Postprocessing table \"{table_name}\"...")
     postprocess_table(database, table_name)
 
 
@@ -136,7 +138,7 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
     # Create labelizer instance
     labelizer = Labelizer()
 
-    print(f"Simplifying geometries for zoom level {zoom_level}...")
+    print(f"[{table_name}-z{zoom_level}] Simplifying geometries for zoom level {zoom_level}...")
 
     # Check if simplification is desired
     if simplify_geometries:
@@ -147,13 +149,13 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
 
     # Check if arced labels need to be calculated for this data
     if arced_labels_needed(area_type, zoom_level):
-        print(f"Calculating arced labels for geometries...")
+        print(f"[{table_name}-z{zoom_level}] Calculating arced labels for geometries...")
         labels_dict = labelizer.labeling(simplified_geometries, labels_dict)
 
         print(len(labels_dict.keys()))
 
     # Write result to database
-    print(f"Writing data to database...")
+    print(f"[{table_name}-z{zoom_level}] Writing data to database...")
     write_data(table_name, simplified_geometries, labels_dict, zoom_level)
 
     # Force garbage collection
@@ -179,7 +181,7 @@ def write_data(table_name, geometries, labels_dict, zoom):
     global database
 
     geometry_items = list(geometries.items())
-
+    print(f"size {len(geometry_items)}")
     for i in range(0, len(geometry_items), WRITE_BATCH_SIZE):
         chunk_list = geometry_items[i:i + WRITE_BATCH_SIZE]
 
@@ -257,7 +259,6 @@ def read_area_types():
 
 def main():
     global database
-
     # Read area type definition from JSON file
     area_type_groups = read_area_types()
 

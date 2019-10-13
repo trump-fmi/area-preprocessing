@@ -13,7 +13,8 @@ GEOMETRIES_WHITELIST = ["LineString", "MultiLineString", "Polygon", "MultiPolygo
 
 
 class ExtractionRule:
-    def __init__(self, filter_conditions_list, thread_count):
+    def __init__(self, table_name, filter_conditions_list, thread_count):
+        self.table_name = table_name
         self.filter_conditions_list = filter_conditions_list
         self.thread_count = thread_count
         self.extracted_features = mp.Manager().list()
@@ -21,15 +22,13 @@ class ExtractionRule:
     def call_convert_script(self):
         # Build pipeline script call with parameters
         script_path = os.path.join(PIPELINE_DIR, CONVERT_SCRIPT_NAME)
-        script_call = f"{script_path} \"{INPUT_FILE_PATH}\""
-
-        # Execute script
-        return_value = os.system(script_call)
-
-        # Check script return value
-        if return_value != 0:
-            print("Error: Convert script execution failed.")
+        convert_process = os.popen(f"{script_path} \"{INPUT_FILE_PATH}\"")
+        hashed_o5m_path = convert_process.read()
+        if convert_process.close() is not None:
+            print(f"[{self.table_name}] Error: Convert script execution failed.")
             exit(-1)
+
+        return hashed_o5m_path
 
     def extract(self):
         # Dict for all extracted geometries
@@ -39,18 +38,17 @@ class ExtractionRule:
         labels_dict = {}
 
         # Convert input file to .o5m if needed
-        self.call_convert_script()
+        hashed_o5m_path = self.call_convert_script()
 
-        print(f"There are {len(self.filter_conditions_list)} filter conditions. Extracting with {self.thread_count} threads.")
-
-
-        # Multiprocessing pool
+        # Initialise Multiprocessing pool
         pool = mp.Pool(processes=self.thread_count)
-        print(f"Preprocessing data on {self.thread_count} threads...")
+        print(f"[{self.table_name}] There are {len(self.filter_conditions_list)} filter conditions. Extracting with {self.thread_count} threads.")
 
-        # Iterate over the list of filter conditions
+        count=0
+        # Create threads to extract data with pipeline
         for filter_condition in self.filter_conditions_list:
-            pool.apply_async(self.extract_with_pipeline, args=[filter_condition])
+            count += 1
+            pool.apply_async(self.extract_with_pipeline, args=[f"{self.table_name}-{count}", hashed_o5m_path, filter_condition])
 
         # Wait for all threads to finish
         pool.close()
@@ -58,9 +56,8 @@ class ExtractionRule:
 
         # Sanity check
         if len(self.extracted_features) < 1:
-            print("Error: Reading pipeline output failed.")
+            print(f"[{self.table_name}] Error: Reading pipeline output failed.")
             exit(-1)
-
 
         # Iterate over all extracted features
         for feature in self.extracted_features:
@@ -100,14 +97,14 @@ class ExtractionRule:
         # Return resulting list of geometries
         return geometries_dict, labels_dict
 
-    def extract_with_pipeline(self, filter_condition):
-        print(f"Next filter condition: {filter_condition}")
+    def extract_with_pipeline(self, thread_name, hashed_o5m_path, filter_condition):
+        print(f"[{thread_name}] Next filter condition: {filter_condition}")
         script_path = os.path.join(PIPELINE_DIR, PIPELINE_SCRIPT_NAME)
-        pipeline_process = os.popen(f"{script_path} {INPUT_FILE_PATH} {filter_condition}")
+        pipeline_process = os.popen(f"{script_path} {thread_name} {hashed_o5m_path} {filter_condition}".replace("\n", ""))
         pipeline_output = pipeline_process.read()
         if pipeline_process.close() is not None:
-            print("Error: Pipeline script execution failed.")
+            print(f"[{thread_name}] Error: Pipeline script execution failed.")
         loaded_features = json.loads(pipeline_output)["features"]
-        print(f"Filter condition resulted in {len(loaded_features)} features")
+        print(f"[{thread_name}] Filter condition resulted in {len(loaded_features)} features")
         # Add features to list of all extracted features
         self.extracted_features.extend(loaded_features)
