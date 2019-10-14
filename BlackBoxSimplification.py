@@ -44,7 +44,7 @@ class BlackBoxSimplification(Simplification):
                 # Iterate over all contained line rings
                 for ringIndex, ringCoordinates in enumerate(line_rings):
                     all_coordinates.append(ringCoordinates)
-                    all_geometries.append(geometry, geoIndex, ringIndex)
+                    all_geometries.append((geometry, geoIndex, ringIndex, None))
 
             # Geometry is a multi polygon
             elif geometry['type'] == 'MultiPolygon':
@@ -54,7 +54,7 @@ class BlackBoxSimplification(Simplification):
                     # Iterate over all contained line rings
                     for ringIndex, ringCoordinates in enumerate(line_rings):
                         all_coordinates.append(ringCoordinates)
-                        all_geometries.append(geometry, geoIndex, polygonIndex, ringIndex)
+                        all_geometries.append((geometry, geoIndex, polygonIndex, ringIndex))
 
             else:
                 print(f"Other geometry: {geometry['type']}")
@@ -95,6 +95,7 @@ class BlackBoxSimplification(Simplification):
         
         # loop through geometries and put simplified borders there
         current_coordinates = None
+        have_polygon = False
         previous_geometry = None
         previous_geoIndex = None
         previous_2ndIndex = None
@@ -106,9 +107,15 @@ class BlackBoxSimplification(Simplification):
             current_2ndIndex = geometry_data[2]
             current_3rdIndex = geometry_data[3]
             
+            # got new polygon, save what we got
+            if current_2ndIndex != previous_2ndIndex and have_polygon == True:
+                previous_geometry['coordinates'][previous_2ndIndex] = current_coordinates
+                have_polygon = False
+
             # got new geometry, save what we got
-            if current_geoIndex != previous_geoIndex and previous_geometry != None:
+            if current_geoIndex != previous_geoIndex and previous_geometry != None and previous_geometry['type'] != 'MultiPolygon':
                 previous_geometry['coordinates'] = current_coordinates
+                previous_geometry = None
 
             if geometry['type'] == 'LineString':
                 current_geometry['coordinates'] = coordinates
@@ -127,7 +134,15 @@ class BlackBoxSimplification(Simplification):
                 #exit()
             
             elif geometry['type'] == 'MultiPolygon':
-                
+                if have_polygon == False:
+                    have_polygon = True
+                    previous_geometry = current_geometry
+                    previous_geoIndex = current_geoIndex
+                    previous_2ndIndex = current_2ndIndex
+                    current_coordinates = coordinates                  
+
+                current_coordinates += "\n" + coordinates
+
                 
 
         return geometries
@@ -186,9 +201,9 @@ class BlackBoxSimplification(Simplification):
         input_string += "\n"
         input_string += "\n".join(map(lambda b: " ".join(map(lambda t: " ".join(map(str, t)), b)), coordinates))
 
-        print("\nDEBUG: READING FROM tmp2.txt\n")
-        with open('tmp2.txt', 'r') as data_file:
-            input_string = data_file.read()
+        #print("\nDEBUG: READING FROM tmp2.txt\n")
+        #with open('tmp2.txt', 'r') as data_file:
+        #    input_string = data_file.read()
 
         # run black box
         xfree_process = run(["../topo_simplify/XFREE/build/xfree"], stdout=PIPE, input=input_string, encoding='ascii')
