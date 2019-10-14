@@ -12,14 +12,22 @@ class BlackBoxSimplification(Simplification):
     def simplify(self, constraint_points, geometries, zoom):
         all_coordinates = []
         all_geometries = []
-
+        count = 0
         # Iterate over all geometries
         for geoIndex, geometry in geometries.items():
 
             # Geometry is a line string
             if geometry['type'] == 'LineString':
+                count +=1
+                #print(geoIndex)
+                #print(geometry)
+                #if count ==2:
+                #    exit()
                 all_coordinates.append(geometry['coordinates'])
-                all_geometries.append(geometry)
+                all_geometries.append((geometry, geoIndex, None, None))
+
+                #print(all_geometries)
+                #exit()
 
             # Geometry is a multi line string
             elif geometry['type'] == 'MultiLineString':
@@ -27,16 +35,16 @@ class BlackBoxSimplification(Simplification):
 
                 for line_index, line_coordinates in enumerate(line_strings):
                     all_coordinates.append(line_coordinates)
-                    all_geometries.append(geometry)
+                    all_geometries.append((geometry, geoIndex, line_index, None))
 
-            # Geometry is a polygon
+            # geometry is a polygon
             elif geometry['type'] == 'Polygon':
                 line_rings = geometry['coordinates']
 
                 # Iterate over all contained line rings
                 for ringIndex, ringCoordinates in enumerate(line_rings):
                     all_coordinates.append(ringCoordinates)
-                    all_geometries.append(geometry)
+                    all_geometries.append(geometry, geoIndex, ringIndex)
 
             # Geometry is a multi polygon
             elif geometry['type'] == 'MultiPolygon':
@@ -46,7 +54,7 @@ class BlackBoxSimplification(Simplification):
                     # Iterate over all contained line rings
                     for ringIndex, ringCoordinates in enumerate(line_rings):
                         all_coordinates.append(ringCoordinates)
-                        all_geometries.append(geometry)
+                        all_geometries.append(geometry, geoIndex, polygonIndex, ringIndex)
 
             else:
                 print(f"Other geometry: {geometry['type']}")
@@ -55,7 +63,6 @@ class BlackBoxSimplification(Simplification):
         print("Running black box...")
         #simplified_geometries = self.blackBox([[9.1067832, 48.7448467], [9.2190092, 48.6600964], [8.8484828, 48.6103653]], all_coordinates)
         blackbox_out, xfree_out = self.blackBox([], all_coordinates)      
-
         ###
         # put simplified border parts back to borders
         ###
@@ -65,9 +72,18 @@ class BlackBoxSimplification(Simplification):
         simplified_geometries = []
 
         # "jump" to mappings and handle them
-        number_of_mappings = xfree_out[1] + 1
-        for current_mapping in range(number_of_mappings, xfree_out[number_of_mappings] + 1):
-            simplified_geometries.append(resolveMapping(current_mapping, border_parts))
+        # output of xfree:
+        #    [0] constraint points
+        #    [1] number of borders = X
+        #  [...] X times one border per line
+        #  [X+2] number of mappings = Y
+        #  [...] Y times one mapping per line
+        
+        mappings_start = int(int(xfree_out[1]) + 3)
+
+        for current_mapping in range(mappings_start, len(xfree_out) - 1):
+            print(xfree_out[current_mapping])
+            simplified_geometries.append(self.resolveMapping(xfree_out[current_mapping], border_parts))
 
 
         ###
@@ -75,30 +91,44 @@ class BlackBoxSimplification(Simplification):
         ###
         if len(simplified_geometries) != len(all_geometries):
             print("simplified border count does not match original border count")
-            exit()
+            #exit()
         
         # loop through geometries and put simplified borders there
-        current_position = -1
-
-        for geometry, coordinates in zip(all_geometries, all_coordinates):
-            current_position += 1
+        previous_2ndIndex = None
+        previous_3rdIndex = None
+        
+        for geometry_data, coordinates in zip(all_geometries, all_coordinates):
+            current_geometry = geometry_data[0]
+            current_geoIndex = geometry_data[1]
+            current_2ndIndex = geometry_data[2]
+            current_3rdIndex = geometry_data[3]
             
             if geometry['type'] == 'LineString':
-                geometry['coordinates'].append(coordinates)
+                current_geometry['coordinates'] = coordinates
+                #print(geometry)
+                #exit()
             
             elif geometry['type'] == 'MultiLineString':
-                print (geometry)
+                if previous_2ndIndex == None:
+                    previous_2ndIndex = current_2ndIndex
+                    current_coordinates = coordinates
+                
+                print(geometry)
                 exit()
 
         return geometries
 
 
-    def resolveMapping(mapping, border_parts):
+    def resolveMapping(self, mapping, border_parts):
         retVal = ""
+        print(mapping)
         values = mapping.split(' ')
         count = 0
-        while count < len(values):
-            tmp = border_parts[mapping[count]]
+        print("len val: " + str(len(values)))
+        print(values)
+        while count < len(values) - 1:
+            print("current count: " + mapping[count])
+            tmp = border_parts[int(mapping[count])]
             count += 1
             if mapping[count] == 0:
                 retVal = addPart(retVal, tmp, false)
@@ -137,10 +167,14 @@ class BlackBoxSimplification(Simplification):
     def blackBox(self, constraint_points, coordinates):
         # Put input string together
         input_string = " ".join(map(lambda t: " ".join(map(str, t)), constraint_points))
-        input_string += "\n"
-        input_string += str(len(coordinates))
+        #input_string += "\n"
+        #input_string += str(len(coordinates))
         input_string += "\n"
         input_string += "\n".join(map(lambda b: " ".join(map(lambda t: " ".join(map(str, t)), b)), coordinates))
+
+        print("\nDEBUG: READING FROM tmp2.txt\n")
+        with open('tmp2.txt', 'r') as data_file:
+            input_string = data_file.read()
 
         # run black box
         xfree_process = run(["../topo_simplify/XFREE/build/xfree"], stdout=PIPE, input=input_string, encoding='ascii')
