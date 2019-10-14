@@ -97,7 +97,7 @@ def extract_area_type(area_type):
     zoom_min = float(area_type[JSON_KEY_GROUP_TYPE_ZOOM_MIN])
     zoom_max = float(area_type[JSON_KEY_GROUP_TYPE_ZOOM_MAX])
 
-    input_size = os.path.getsize(INPUT_FILE_PATH)
+    input_size = os.path.getsize(os.path.join("./pipeline", INPUT_FILE_PATH))
     needed_memory = input_size * 5
     available_memory = psutil.virtual_memory().available
     possible_threads = max(1, min(math.floor(available_memory / needed_memory), mp.cpu_count()))
