@@ -94,6 +94,9 @@ class BlackBoxSimplification(Simplification):
             #exit()
         
         # loop through geometries and put simplified borders there
+        current_coordinates = None
+        previous_geometry = None
+        previous_geoIndex = None
         previous_2ndIndex = None
         previous_3rdIndex = None
         
@@ -103,18 +106,29 @@ class BlackBoxSimplification(Simplification):
             current_2ndIndex = geometry_data[2]
             current_3rdIndex = geometry_data[3]
             
+            # got new geometry, save what we got
+            if current_geoIndex != previous_geoIndex and previous_geometry != None:
+                previous_geometry['coordinates'] = current_coordinates
+
             if geometry['type'] == 'LineString':
                 current_geometry['coordinates'] = coordinates
                 #print(geometry)
                 #exit()
             
-            elif geometry['type'] == 'MultiLineString':
-                if previous_2ndIndex == None:
-                    previous_2ndIndex = current_2ndIndex
-                    current_coordinates = coordinates
+            elif geometry['type'] == 'MultiLineString' or geometry['type'] == 'Polygon':
+                if previous_geometry == None:
+                    previous_geometry = current_geometry
+                    previous_geoIndex = current_geoIndex
+                    current_coordinates = coordinates                  
+
+                current_coordinates += "\n" + coordinates
+
+                #print(geometry)
+                #exit()
+            
+            elif geometry['type'] == 'MultiPolygon':
                 
-                print(geometry)
-                exit()
+                
 
         return geometries
 
