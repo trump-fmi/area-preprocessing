@@ -91,6 +91,8 @@ database = None
 def extract_area_type(area_type):
     global database
 
+    start_time = time.perf_counter()
+
     # Extract properties of interest from area type definition
     table_name = str(area_type[JSON_KEY_GROUP_TYPE_TABLE_NAME])
     filter_parameters = area_type[JSON_KEY_GROUP_TYPE_FILTERS]
@@ -102,8 +104,8 @@ def extract_area_type(area_type):
     available_memory = psutil.virtual_memory().available
     possible_threads = max(1, min(math.floor(available_memory / needed_memory), mp.cpu_count()))
     print(f"[{table_name}] Input size is {int(input_size / 1024 / 1024)}MiB,"
-          " needs {int(needed_memory / 1024 / 1024)}MiB memory (available: {int(available_memory / 1024 / 1024)}MiB)."
-          "-> Limiting to {int(available_memory / needed_memory)} threads")
+          f" needs {int(needed_memory / 1024 / 1024)}MiB memory (available: {int(available_memory / 1024 / 1024)}MiB)."
+          f"-> Limiting to {int(available_memory / needed_memory)} threads")
 
     prepare_table(database, table_name)
     print(f"[{table_name}] Table prepared")
@@ -115,7 +117,8 @@ def extract_area_type(area_type):
     print(f"[{table_name}] Extracted {len(geometries_dict)} geometries and {len(labels_dict)} labels")
 
     # Multiprocessing pool
-    pool = mp.Pool(processes=possible_threads)
+    # TODO re-enable multithreading (currently crashes when multitple threads write to postgres)
+    pool = mp.Pool(processes=1)
     print(f"[{table_name}] Preprocessing data on {possible_threads} threads...")
 
     # Iterate over all desired zoom levels
@@ -129,6 +132,9 @@ def extract_area_type(area_type):
     # Wait for all threads to finish
     pool.close()
     pool.join()
+
+    elapsed_time = time.perf_counter() - start_time
+    print(f"[{table_name}] Preprocessing finished. Took {elapsed_time:0.4}")
 
     print(f"[{table_name}] Postprocessing table \"{table_name}\"...")
     postprocess_table(database, table_name)
@@ -183,7 +189,7 @@ def arced_labels_needed(area_type, zoom):
 def write_data(table_name, geometries, labels_dict, zoom):
     global database
 
-    start = time.perf_counter()
+    start_time = time.perf_counter()
     query_tuples = []
 
     for id, geometry in list(geometries.items()):
@@ -218,9 +224,9 @@ def write_data(table_name, geometries, labels_dict, zoom):
 
     database.write_query(TABLE_INSERT_QUERY.format(table_name), template=TABLE_INSERT_TEMPLATE,
                          query_tuples=query_tuples, page_size=WRITE_BATCH_SIZE)
-    elapsed = time.perf_counter() - start
-    print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed:0.4} '
-          'with batch size {WRITE_BATCH_SIZE}')
+    elapsed_time = time.perf_counter() - start_time
+    print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed_time:0.4} '
+          f'with batch size {WRITE_BATCH_SIZE}')
 
 
 def prepare_table(database, table_name):
@@ -263,6 +269,8 @@ def main():
                                   password=DATABASE_PASSWORD)
     print("Successfully connected")
 
+    start_time = time.perf_counter()
+
     # Iterate over all area type groups
     for area_type_group in area_type_groups:
         # Get group name
@@ -279,8 +287,8 @@ def main():
 
         print(f"Finished group \"{group_name}\"")
 
-    print("Simplification finished")
-    print("Everything done.")
+    elapsed_time = time.perf_counter() - start_time
+    print(f"Simplification finished. Everything done. Took {elapsed_time:0.4}")
 
     database.disconnect()
 
