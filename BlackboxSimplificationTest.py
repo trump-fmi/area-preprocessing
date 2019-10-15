@@ -57,8 +57,8 @@ class BlackboxSimplificationTest(Simplification):
 				string_input += "\n"
 		
 			elif geometry['type'] == 'MultiLineString':
-				mapping.append([3,[len(geometry['coordinates'])]])
-				for linestring in geometry.cordinates:
+				mapping.append([4,[len(geometry['coordinates'])]])
+				for linestring in geometry['coordinates']:
 					for coordinate in linestring:
 						string_input += str(coordinate[0]) + " " + str(coordinate[1]) + " "
 					string_input += "\n"
