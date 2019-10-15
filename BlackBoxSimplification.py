@@ -150,13 +150,13 @@ class BlackBoxSimplification(Simplification):
 
     def resolveMapping(self, mapping, border_parts):
         retVal = ""
-        print(mapping)
+#        print(mapping)
         values = mapping.split(' ')
         count = 0
-        print("len val: " + str(len(values)))
-        print(values)
+#        print("len val: " + str(len(values)))
+#        print(values)
         while count < len(values) - 1:
-            print("current count: " + mapping[count])
+#            print("current count: " + mapping[count])
             tmp = border_parts[int(mapping[count])]
             count += 1
             if mapping[count] == 0:
