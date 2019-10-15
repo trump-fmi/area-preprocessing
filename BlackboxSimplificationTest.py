@@ -161,14 +161,12 @@ class BlackboxSimplificationTest(Simplification):
 					if len(geometry) >= 1 and geometry[-1] == lines[combination[0]][-1]:
 						geometry.extend(lines[combination[0]][-2::-1])
 					else: 
-						geometry.extend(lines[combination[0]][::-1])
-						#first = False		
+						geometry.extend(lines[combination[0]][::-1])						
 				elif combination[1] == 0:
-				    if len(geometry) >= 1:
+				    if len(geometry) >= 1 and geometry[-1] == lines[combination[0]][0]:
 					    geometry.extend(lines[combination[0]][1:])
 				    else: 
-					    geometry.extend(lines[combination[0]])
-					    #first = False		
+					    geometry.extend(lines[combination[0]])					    	
 
 			geometries.append(geometry)	
 		return geometries       
