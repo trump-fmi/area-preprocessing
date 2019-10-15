@@ -1,28 +1,42 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from psycopg2 import pool
 
 
 class DatabaseConnection:
     def __init__(self, host, database, user, password=None):
-        self.host = host
-        self.database = database
-        self.user = user
-        self.password = password
-        self.connection = psycopg2.connect(host=host, database=database, user=user, password=password)
-        self.connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        self.cursor = self.connection.cursor()
+        self.connection_pool = psycopg2.pool.SimpleConnectionPool(1, 20, user=user,
+                                                                  password=password,
+                                                                  host=host,
+                                                                  database=database)
+
+    def open_cursor(self):
+        connection = self.connection_pool.getconn()
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        return connection.cursor()
+
+    def close_cursor(self, cursor):
+        connection = cursor.connection
+        cursor.close()
+        self.connection_pool.putconn(connection)
 
     def query(self, query):
         try:
-            self.cursor.execute(query)
+            cursor = self.open_cursor()
+            cursor.execute(query)
         except:
             print(f"Failed query: {query}")
-            self.disconnect()
             exit(-1)
+        finally:
+            self.close_cursor(cursor)
 
     def queryForResult(self, query):
-        self.cursor.execute(query)
-        return self.cursor.fetchall()
+        cursor = self.open_cursor()
+        cursor.execute(query)
+        result = cursor.fetchall()
+        self.close_cursor(cursor)
+        return result
 
     def disconnect(self):
-        self.connection.close()
+        if self.connection_pool:
+            self.connection_pool.closeall()

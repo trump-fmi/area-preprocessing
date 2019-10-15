@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
 
 # ************ Usage *************
-# 1st parameter: Input file to use (*.osm or *.pbf)
-# 2nd parameter: Output file to produce (*.json)
+# 1st parameter: Instance name for logging
+# 2nd parameter: Converted input file to use (*.o5m)
 # Following parameters: Osmfilter arguments
 # ********************************
 
-# ****** Name of temp files ******
-TEMP_FILTERED="filtered.osm"
-# ********************************
-
-# Increase node RAM size
+# Increase node RAM size (needed for osmtogeojson)
 export NODE_OPTIONS=--max_old_space_size=16384
 
 # Switch into pipeline directory
@@ -18,47 +14,26 @@ cd "${0%/*}"
 
 # Uncomment for windows
 # cd pipeline
-
-# Store command line parameters
-INPUT_FILE="$1"
-OUTPUT_FILE="$2"
-HASHED_O5M_PATH="$(sha256sum "$INPUT_FILE" | cut -d" " -f 1 | cut -c-10 ).o5m"
-
-echo "Filename with content hash is $HASHED_O5M_PATH"
+INSTANCE="$1"
+INPUT_FILE="$2"
+TEMP_FILTERED="${INPUT_FILE}-filtered-$RANDOM.osm"
+OSMFILTER_TEMPFILE="${INPUT_FILE}-osmfilter-temp-$RANDOM.osm"
 
 # Discard first two command line parameters
 shift 2
 
-echo "Started extraction pipeline"
-echo "---------------------------------------------"
-echo "Input file: \"${INPUT_FILE}\""
-echo "Output file: \"${OUTPUT_FILE}\""
-echo "Filter parameters: \"$@\""
-
-# Remove old stuff
-echo "Removing old JSON files..."
-rm -f *.json
-
-if [ ! -f "$HASHED_O5M_PATH" ]; then
-    # Convert input file
-    echo "Converting input file to o5m format ($HASHED_O5M_PATH)..."
-    osmconvert "${INPUT_FILE}" -o="${HASHED_O5M_PATH}"
-else
-    echo "Not converting input file because $HASHED_O5M_PATH already exists"
-fi
+echo "[$INSTANCE] Started extraction pipeline" 1>&2
+echo "[$INSTANCE] Input file: \"${INPUT_FILE}\"" 1>&2
 
 # Filter OSM data
-echo "Filtering for requested OSM data..."
-osmfilter "${HASHED_O5M_PATH}" -o="${TEMP_FILTERED}" "$@"
+echo "[$INSTANCE] Filtering for requested OSM data with parameters: \"$@\"" 1>&2
+osmfilter "${INPUT_FILE}" -o="${TEMP_FILTERED}" -t="${OSMFILTER_TEMPFILE}" "$@"
 
 # Convert result to GeoJSON
-echo "Converting OSM data to GeoJSON..."
-osmtogeojson -m "${TEMP_FILTERED}" > "${OUTPUT_FILE}"
+echo "[$INSTANCE] Converting OSM data to GeoJSON and transforming to target projection..." 1>&2
+osmtogeojson -m "${TEMP_FILTERED}" | reproject --use-epsg-io --from=EPSG:4326 --to=EPSG:3857
 
 # Remove all temp files
-echo "Cleaning up..."
-rm -f "${TEMP_FILTERED}"
+rm -f "${TEMP_FILTERED}" "${OSMFILTER_TEMPFILE}"
 
-echo "Successfully done."
-
-exit 0
+echo "[$INSTANCE] Successfully done." 1>&2

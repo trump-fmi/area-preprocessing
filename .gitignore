@@ -111,4 +111,7 @@ venv.bak/
 
 # Ignore pipeline folder for now
 pipeline/*.exe
-
+pipeline/result.json
+pipeline/*.o5m
+pipeline/*.osm
+pipeline/*.json
