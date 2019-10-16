@@ -5,6 +5,7 @@ from Labelizer import Labelizer
 from NoSimplification import NoSimplification
 from SimpleSimplification import SimpleSimplification
 from BlackBoxSimplification import BlackBoxSimplification
+from BlackboxSimplificationTest import BlackboxSimplificationTest
 from database import DatabaseConnection
 import os
 import json
@@ -79,7 +80,8 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
 # SIMPLIFICATION = BlackBoxSimplification()
-SIMPLIFICATION = NoSimplification()
+# SIMPLIFICATION = NoSimplification()
+SIMPLIFICATION = BlackboxSimplificationTest()
 
 # Number of geometries to write within one database query
 WRITE_BATCH_SIZE = 4000
