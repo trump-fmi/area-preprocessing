@@ -32,11 +32,17 @@ class Labelizer:
 
                 # Geometry is a multi polygon
             elif geometry['type'] == 'MultiPolygon':
-                polygon = geometry['coordinates'][0]
 
-                outer_coordinates = polygon[0]
-                if len(polygon) > 1:
-                    inner_coordinates = polygon[1:]
+                current = None
+                for polygon in geometry['coordinates']:
+                    if current == None or len(current[0]) < len(polygon[0]):
+                        current == polygon
+
+                #polygon = geometry['coordinates'][0]
+
+                outer_coordinates = current[0]
+                if len(current) > 1:
+                    inner_coordinates = current[1:]
 
                 self.blackbox(geoIndex, outer_coordinates, inner_coordinates, labels[geoIndex])
 
