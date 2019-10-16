@@ -133,8 +133,8 @@ class BlackboxSimplificationTest(Simplification):
 			ctr_input += entry + "\n"
 
 	    # CTR BLACKBOX	
-		#TODO: ZOOM -> EPSILON
-		ctr_process = run([BLACKBOX_SIMPL_PATH, "200"], stdout=PIPE, input=ctr_input, encoding='ascii')
+		epsilon = str((1/(zoom*100))* 100000)
+		ctr_process = run([BLACKBOX_SIMPL_PATH, epsilon], stdout=PIPE, input=ctr_input, encoding='ascii')
 		ctr_output = ctr_process.stdout
 
 		ctr_result = ctr_output.split("\n")[1:-1]
