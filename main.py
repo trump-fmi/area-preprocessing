@@ -134,7 +134,7 @@ def extract_area_type(area_type):
     pool.join()
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"[{table_name}] Preprocessing finished. Took {elapsed_time:0.4}")
+    print(f"[{table_name}] Preprocessing finished. Took {elapsed_time} seconds")
 
     print(f"[{table_name}] Postprocessing table \"{table_name}\"...")
     postprocess_table(database, table_name)
@@ -225,7 +225,7 @@ def write_data(table_name, geometries, labels_dict, zoom):
     database.write_query(TABLE_INSERT_QUERY.format(table_name), template=TABLE_INSERT_TEMPLATE,
                          query_tuples=query_tuples, page_size=WRITE_BATCH_SIZE)
     elapsed_time = time.perf_counter() - start_time
-    print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed_time:0.4} '
+    print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed_time} seconds '
           f'with batch size {WRITE_BATCH_SIZE}')
 
 
@@ -288,7 +288,7 @@ def main():
         print(f"Finished group \"{group_name}\"")
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"Simplification finished. Everything done. Took {elapsed_time:0.4}")
+    print(f"Simplification finished. Everything done. Took {elapsed_time} seconds")
 
     database.disconnect()
 
