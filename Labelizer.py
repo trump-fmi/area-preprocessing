@@ -36,9 +36,10 @@ class Labelizer:
                 current = None
                 for polygon in geometry['coordinates']:
                     if current == None or len(current[0]) < len(polygon[0]):
-                        current == polygon
+                        current = polygon
 
-                #polygon = geometry['coordinates'][0]
+
+                # polygon = geometry['coordinates'][0]
 
                 outer_coordinates = current[0]
                 if len(current) > 1:
@@ -52,9 +53,9 @@ class Labelizer:
 
         return self.output_dic
 
-    def blackbox(self, geoIndex, outer, inner, labelName):
+    def blackbox(self, geoIndex, outer, inner, label_name):
         # Estimate Height/Length
-        aspect = str(1 / (len(labelName) * 0.61))
+        aspect = str(1 / (len(label_name) * 0.61))
 
         input_string = aspect + "\n"
 
@@ -89,5 +90,5 @@ class Labelizer:
         print("Subber")
 
         center = [float(result[0]), float(result[1])]
-        self.output_dic[geoIndex] = ArcLabel(labelName, center, float(result[4]), float(result[5]), float(result[2]),
+        self.output_dic[geoIndex] = ArcLabel(label_name, center, float(result[4]), float(result[5]), float(result[2]),
                                              float(result[3]))
