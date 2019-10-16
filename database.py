@@ -38,12 +38,22 @@ class DatabaseConnection:
         finally:
             self.close_cursor(cursor)
 
-    def queryForResult(self, query):
-        cursor = self.open_cursor()
-        cursor.execute(query)
-        result = cursor.fetchall()
-        self.close_cursor(cursor)
-        return result
+    def query_for_result(self, query, retry=0):
+        try:
+            cursor = self.open_cursor()
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return result
+        except Exception as e:
+            if retry < 5:
+                print(f"Query '{query}' failed with exception: {e}. Retrying.")
+                retry += 1
+                return self.query_for_result(query, retry)
+            else:
+                print(f"Query '{query}' failed with exception: {e}. Aborting.")
+                exit(-1)
+        finally:
+            self.close_cursor(cursor)
 
     def disconnect(self):
         if self.connection_pool:
