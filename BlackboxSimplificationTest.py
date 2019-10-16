@@ -6,8 +6,8 @@ import math
 import numpy as np
 import copy
 
-BLACKBOX_PATH = "topo_simplify/XFREE/build/make_x_free"
-BLACKBOX_SIMPL_PATH = "topo_simplify/CTR/build/topo_simplify"
+BLACKBOX_PATH = "../topo_simplify/XFREE/build/make_x_free"
+BLACKBOX_SIMPL_PATH = "../topo_simplify/CTR/build/topo_simplify"
 
 MULTIPOLYGON = 1
 POLYGON = 2
