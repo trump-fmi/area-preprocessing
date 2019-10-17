@@ -29,7 +29,12 @@ class BlackboxSimplificationTest(Simplification):
 		for c_point in constraint_points:
 			string_input += str(c_point[0])+" "+ str(c_point[1]) +" "
 		string_input += "\n"
+		
+		geom_count = 20
 		for geoIndex, geometry in geometries.items():
+			geom_count = geom_count - 1
+			if geom_count == 0:
+				break
 
 			if geometry['type'] == 'Polygon':
 				#MAPPING FOR LATER RECREATION OF GEOMETRY(
