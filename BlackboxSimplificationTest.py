@@ -102,9 +102,14 @@ class BlackboxSimplificationTest(Simplification):
 				coords.append(multipoly)
 
 		index = 0
+		geom_count = 20
 		for geoIndex, geometry in geometries.items():
+			geom_count = geom_count - 1
+			if geom_count == 0:
+				break
 			self.newDict[geoIndex]['coordinates'] = coords[index]
 			index += 1
+			
 
 		return self.newDict
 
