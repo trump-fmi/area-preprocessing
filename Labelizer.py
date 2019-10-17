@@ -12,7 +12,11 @@ class Labelizer:
 
     def labeling(self, geometries, labels):
 
+        count = 20
         for geoIndex, geometry in geometries.items():
+            count = count - 1
+            if count == 0:
+                break
 
             if not geoIndex in labels:
                 continue
