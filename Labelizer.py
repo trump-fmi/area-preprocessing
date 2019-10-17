@@ -3,7 +3,7 @@ from sys import exit
 from ArcLabel import ArcLabel
 
 BLACKBOX_PATH = "../area_labeling/standalone_lib/build/bin/labeling"
-
+LOG_FILE = open("labelizer_log.txt", "a+")
 
 class Labelizer:
 
@@ -70,6 +70,11 @@ class Labelizer:
                 input_string += "\n"
 
         input_string += "s\n"
+                      
+        # Logging
+        LOG_FILE.write(f"Label {label_name}:")
+        LOG_FILE.write(input_string)
+        LOG_FILE.write("\n\n\n")
 
         # run black box
         label_process = run([BLACKBOX_PATH, "-s"], stdout=PIPE, input=input_string,
