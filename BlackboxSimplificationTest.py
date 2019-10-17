@@ -30,7 +30,7 @@ class BlackboxSimplificationTest(Simplification):
 			string_input += str(c_point[0])+" "+ str(c_point[1]) +" "
 		string_input += "\n"
 		
-		geom_count = 20
+		geom_count = 50
 		for geoIndex, geometry in geometries.items():
 			geom_count = geom_count - 1
 			if geom_count == 0:
@@ -102,7 +102,7 @@ class BlackboxSimplificationTest(Simplification):
 				coords.append(multipoly)
 
 		index = 0
-		geom_count = 20
+		geom_count = 50
 		for geoIndex, geometry in geometries.items():
 			geom_count = geom_count - 1
 			if geom_count == 0:
