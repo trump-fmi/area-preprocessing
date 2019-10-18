@@ -64,13 +64,11 @@ class Labelizer:
         input_string += "\n"
         if len(inner) > 0:
             for hole in inner:
-                input_string += "i\n"
                 for coordinate in hole:
                     input_string += str(coordinate[0]) + " " + str(coordinate[1]) + " "
                 input_string += "\n"
 
-        input_string += "s\n"
-                      
+                              
         # Logging
         LOG_FILE.write(f"Label {label_name}:")
         LOG_FILE.write(input_string)
