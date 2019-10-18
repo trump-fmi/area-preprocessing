@@ -14,6 +14,8 @@ POLYGON = 2
 LINESTRING = 3
 MULTILINESTRING = 4
 
+GEOM_LIMIT = 999999999
+
 
 class BlackboxSimplificationTest(Simplification):
 
@@ -30,7 +32,7 @@ class BlackboxSimplificationTest(Simplification):
 			string_input += str(c_point[0])+" "+ str(c_point[1]) +" "
 		string_input += "\n"
 		
-		geom_count = 50
+		geom_count = GEOM_LIMIT
 		for geoIndex, geometry in geometries.items():
 			geom_count = geom_count - 1
 			if geom_count == 0:
@@ -102,7 +104,7 @@ class BlackboxSimplificationTest(Simplification):
 				coords.append(multipoly)
 
 		index = 0
-		geom_count = 50
+		geom_count = GEOM_LIMIT
 		for geoIndex, geometry in geometries.items():
 			geom_count = geom_count - 1
 			if geom_count == 0:
