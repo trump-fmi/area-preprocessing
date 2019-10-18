@@ -14,7 +14,7 @@ POLYGON = 2
 LINESTRING = 3
 MULTILINESTRING = 4
 
-GEOM_LIMIT = 999999999
+GEOM_LIMIT = 20
 
 
 class BlackboxSimplificationTest(Simplification):

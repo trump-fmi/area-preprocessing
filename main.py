@@ -80,14 +80,18 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
 # SIMPLIFICATION = BlackBoxSimplification()
-SIMPLIFICATION = NoSimplification()
-# SIMPLIFICATION = BlackboxSimplificationTest()
+#SIMPLIFICATION = NoSimplification()
+SIMPLIFICATION = BlackboxSimplificationTest()
 
 # Number of geometries to write within one database query
 WRITE_BATCH_SIZE = 4000
 
 # Database instance
 database = None
+
+LOG_FILE = open("main_geom_log_before.txt", "a+")
+LOG_FILE_AFTER = open("main_geom_log_after.txt", "a+")
+
 
 
 def extract_area_type(area_type):
@@ -151,12 +155,38 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
 
     print(f"[{table_name}-z{zoom_level}] Simplifying geometries for zoom level {zoom_level}...")
 
+    
+    # Logging
+    geom_index = 20
+    for geoIndex, geometry in geometries_dict:
+        geom_index = geom_index -1
+        if geom_index == 0:
+            break
+        LOG_FILE.write(f"ID: {geoIndex}\n")
+        LOG_FILE.write(geometry['type'])
+        LOG_FILE.write("\n")
+        LOG_FILE.write(geometry['coordinates'])
+        LOG_FILE.write("\n\n\n")
+
     # Check if simplification is desired
     if simplify_geometries:
         simplified_geometries = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict,
                                                         zoom=zoom_level)
     else:
         simplified_geometries = geometries_dict
+
+    # Logging
+    geom_index = 20
+    for geoIndex, geometry in simplified_geometries:
+        geom_index = geom_index -1
+        if geom_index == 0:
+            break
+        LOG_FILE_AFTER.write(f"ID: {geoIndex}\n")
+        LOG_FILE_AFTER.write(geometry['type'])
+        LOG_FILE_AFTER.write("\n")
+        LOG_FILE_AFTER.write(geometry['coordinates'])
+        LOG_FILE_AFTER.write("\n\n\n")
+    
 
     # Check if arced labels need to be calculated for this data
     if arced_labels_needed(area_type, zoom_level):
