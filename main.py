@@ -219,7 +219,7 @@ def write_data(table_name, geometries, labels_dict, zoom):
             # No label (set all ArcLabel properties to default values)
             label = ArcLabel(None)
         query_tuple = (
-            id, geo_json, zoom, geo_json, label.text, label.center, label.start_angle, label.end_angle,
+            id, geo_json, zoom, geo_json, label.text, f"[{str(label.center)}]", label.start_angle, label.end_angle,
             label.inner_radius,
             label.outer_radius)
         query_tuples.append(query_tuple)
