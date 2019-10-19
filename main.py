@@ -154,14 +154,9 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
     labelizer = Labelizer()
 
     print(f"[{table_name}-z{zoom_level}] Simplifying geometries for zoom level {zoom_level}...")
-
     
     # Logging
-    geom_index = 20
     for geoIndex, geometry in geometries_dict:
-        geom_index = geom_index -1
-        if geom_index == 0:
-            break
         LOG_FILE.write(f"ID: {geoIndex}\n")
         LOG_FILE.write(geometry['type'])
         LOG_FILE.write("\n")
@@ -176,11 +171,7 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
         simplified_geometries = geometries_dict
 
     # Logging
-    geom_index = 20
     for geoIndex, geometry in simplified_geometries:
-        geom_index = geom_index -1
-        if geom_index == 0:
-            break
         LOG_FILE_AFTER.write(f"ID: {geoIndex}\n")
         LOG_FILE_AFTER.write(geometry['type'])
         LOG_FILE_AFTER.write("\n")
