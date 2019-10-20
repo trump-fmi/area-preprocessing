@@ -80,8 +80,8 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
 # SIMPLIFICATION = BlackBoxSimplification()
-SIMPLIFICATION = NoSimplification()
-# SIMPLIFICATION = BlackboxSimplificationTest()
+#SIMPLIFICATION = NoSimplification()
+SIMPLIFICATION = BlackboxSimplificationTest()
 
 # Number of geometries to write within one database query
 WRITE_BATCH_SIZE = 4000
@@ -156,7 +156,11 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
     print(f"[{table_name}-z{zoom_level}] Simplifying geometries for zoom level {zoom_level}...")
     
     # Logging
+    geom_limit = 20
     for geoIndex, geometry in geometries_dict.items():
+        geom_limit = geom_limit - 1
+        if geom_limit == 0:
+            break
         LOG_FILE.write(f"ID: {geoIndex}\n")
         LOG_FILE.write(geometry['type'])
         LOG_FILE.write("\n")
@@ -171,7 +175,11 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
         simplified_geometries = geometries_dict
 
     # Logging
+    geom_limit = 20
     for geoIndex, geometry in simplified_geometries.items():
+        geom_limit = geom_limit - 1
+        if geom_limit == 0:
+            break
         LOG_FILE_AFTER.write(f"ID: {geoIndex}\n")
         LOG_FILE_AFTER.write(geometry['type'])
         LOG_FILE_AFTER.write("\n")
