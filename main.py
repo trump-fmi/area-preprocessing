@@ -156,11 +156,11 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
     print(f"[{table_name}-z{zoom_level}] Simplifying geometries for zoom level {zoom_level}...")
     
     # Logging
-    for geoIndex, geometry in geometries_dict:
+    for geoIndex, geometry in geometries_dict.items():
         LOG_FILE.write(f"ID: {geoIndex}\n")
         LOG_FILE.write(geometry['type'])
         LOG_FILE.write("\n")
-        LOG_FILE.write(geometry['coordinates'])
+        LOG_FILE.write(str(geometry['coordinates']))
         LOG_FILE.write("\n\n\n")
 
     # Check if simplification is desired
@@ -171,11 +171,11 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
         simplified_geometries = geometries_dict
 
     # Logging
-    for geoIndex, geometry in simplified_geometries:
+    for geoIndex, geometry in simplified_geometries.items():
         LOG_FILE_AFTER.write(f"ID: {geoIndex}\n")
         LOG_FILE_AFTER.write(geometry['type'])
         LOG_FILE_AFTER.write("\n")
-        LOG_FILE_AFTER.write(geometry['coordinates'])
+        LOG_FILE_AFTER.write(str(geometry['coordinates']))
         LOG_FILE_AFTER.write("\n\n\n")
     
 
