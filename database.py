@@ -20,7 +20,7 @@ class DatabaseConnection:
         cursor.close()
         self.connection_pool.putconn(connection)
 
-    def write_query(self, query, template=None, query_tuples=None, page_size=1000, retry=0):
+    def write_query(self, query, template=None, query_tuples=None, page_size=1000, retry=5):
         try:
             cursor = self.open_cursor()
             if query_tuples and template:
@@ -28,9 +28,9 @@ class DatabaseConnection:
             else:
                 cursor.execute(query)
         except Exception as e:
-            if retry < 5:
+            if retry > 0:
                 print(f"Query '{query}' failed with exception: {e}. Retrying.")
-                retry += 1
+                retry -= 1
                 self.write_query(query, template, query_tuples, page_size, retry)
             else:
                 print(f"Query '{query}' failed with exception: {e}. Aborting.")

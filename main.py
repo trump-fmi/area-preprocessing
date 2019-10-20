@@ -140,7 +140,7 @@ def extract_area_type(area_type):
     pool.join()
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"[{table_name}] Preprocessing finished. Took {elapsed_time} seconds")
+    print(f"[{table_name}] Preprocessing finished. Took {elapsed_time:0.4} seconds")
 
     print(f"[{table_name}] Postprocessing table \"{table_name}\"...")
     postprocess_table(database, table_name)
@@ -234,19 +234,16 @@ def write_data(table_name, geometries, labels_dict, zoom):
         # Stringify GeoJSON in a compact way
         geo_json = json.dumps(geometry, separators=(',', ':'))
         # Check if there is a label available for the current geometry
-        if id in labels_dict:
-            label_obj = labels_dict[id]
+        label_obj = labels_dict[id] if id in labels_dict else None
 
-            # Check if label obj is an ArcLabel
-            if isinstance(label_obj, ArcLabel):
-                # ArcLabel
-                label = label_obj
-            else:
-                # Normal label (set text and remaining ArcLabel properties to default values)
-                label = ArcLabel(label_obj)
+        # Check if label obj is an ArcLabel
+        if isinstance(label_obj, ArcLabel):
+            # ArcLabel
+            label = label_obj
         else:
-            # No label (set all ArcLabel properties to default values)
-            label = ArcLabel(None)
+            # Normal label (set text and remaining ArcLabel properties to default values)
+            label = ArcLabel(label_obj)
+
         query_tuple = (
             id, geo_json, zoom, geo_json, label.text, label.center, label.start_angle, label.end_angle,
             label.inner_radius,
@@ -256,7 +253,7 @@ def write_data(table_name, geometries, labels_dict, zoom):
     database.write_query(TABLE_INSERT_QUERY.format(table_name), template=TABLE_INSERT_TEMPLATE,
                          query_tuples=query_tuples, page_size=WRITE_BATCH_SIZE)
     elapsed_time = time.perf_counter() - start_time
-    print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed_time} seconds '
+    print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed_time:0.4} seconds '
           f'with batch size {WRITE_BATCH_SIZE}')
 
 
@@ -319,7 +316,7 @@ def main():
         print(f"Finished group \"{group_name}\"")
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"Simplification finished. Everything done. Took {elapsed_time} seconds")
+    print(f"Simplification finished. Everything done. Took {elapsed_time:0.4} seconds")
 
     database.disconnect()
 
