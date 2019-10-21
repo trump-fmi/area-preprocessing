@@ -78,6 +78,9 @@ TABLE_POST_QUERIES = ["CREATE INDEX {0}_geom_index ON {0} USING GIST(geom);",
 # Supported zoom range
 ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
+# Labelizer to use for ArcLabels
+ARC_LABELIZER = Labelizer()
+
 # Simplification algorithm to use
 # SIMPLIFICATION = BlackBoxSimplification()
 SIMPLIFICATION = NoSimplification()
@@ -118,8 +121,17 @@ def extract_area_type(area_type):
     # Create extraction rule and use it to extract geometries and labels
     print(f"[{table_name}] Extracting geometries...")
     extraction_rule = ExtractionRule(table_name, filter_parameters, possible_threads)
-    geometries_dict, labels_dict = extraction_rule.extract()
-    print(f"[{table_name}] Extracted {len(geometries_dict)} geometries and {len(labels_dict)} labels")
+    geometries_dict, label_names_dict = extraction_rule.extract()
+    print(f"[{table_name}] Extracted {len(geometries_dict)} geometries and {len(label_names_dict)} labels")
+
+    # Create dictionary that maps geometry IDs to ArcLabels
+    arc_labels_dict = {}
+
+    # Check if arced labels are generally desired for this data
+    if arced_labels_needed(area_type):
+        print(f"[{table_name}] Calculating arced labels for geometries...")
+        arc_labels_dict = ARC_LABELIZER.labeling(geometries_dict, label_names_dict)
+        print(f"[{table_name}] Generated {len(label_names_dict.keys())} labels.")
 
     # Multiprocessing pool
     # TODO re-enable multithreading (currently crashes when multitple threads write to postgres)
@@ -132,28 +144,23 @@ def extract_area_type(area_type):
         if (zoom < zoom_min) or (zoom >= zoom_max):
             continue
 
-        pool.apply_async(process_for_zoom_level, args=(area_type, geometries_dict, labels_dict, table_name, zoom))
+        pool.apply_async(process_for_zoom_level, args=(area_type, geometries_dict, arc_labels_dict, table_name, zoom))
 
     # Wait for all threads to finish
     pool.close()
     pool.join()
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"[{table_name}] Preprocessing finished. Took {elapsed_time:0.4} seconds")
+    print(f"[{table_name}] Processing finished. Took {elapsed_time:0.4} seconds")
 
     print(f"[{table_name}] Postprocessing table \"{table_name}\"...")
     postprocess_table(database, table_name)
 
 
-def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, zoom_level):
+def process_for_zoom_level(area_type, geometries_dict, arc_labels_dict, table_name, zoom_level):
     # Extract simplify property from area type
     simplify_geometries = bool(area_type[JSON_KEY_GROUP_TYPE_SIMPLIFICATION])
 
-    # Create labelizer instance
-    labelizer = Labelizer()
-
-    print(f"[{table_name}-z{zoom_level}] Simplifying geometries for zoom level {zoom_level}...")
-    
     # Logging
     geom_limit = 20
     for geoIndex, geometry in geometries_dict.items():
@@ -168,9 +175,11 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
 
     # Check if simplification is desired
     if simplify_geometries:
+        print(f"[{table_name}-z{zoom_level}] Simplifying geometries for zoom level {zoom_level}...")
         simplified_geometries = SIMPLIFICATION.simplify(constraint_points=[], geometries=geometries_dict,
                                                         zoom=zoom_level)
     else:
+        print(f"[{table_name}-z{zoom_level}] No simplification desired.")
         simplified_geometries = geometries_dict
 
     # Logging
@@ -184,25 +193,18 @@ def process_for_zoom_level(area_type, geometries_dict, labels_dict, table_name, 
         LOG_FILE_AFTER.write("\n")
         LOG_FILE_AFTER.write(str(geometry['coordinates']))
         LOG_FILE_AFTER.write("\n\n\n")
-    
-
-    # Check if arced labels need to be calculated for this data
-    if arced_labels_needed(area_type, zoom_level):
-        print(f"[{table_name}-z{zoom_level}] Calculating arced labels for geometries...")
-        labels_dict = labelizer.labeling(simplified_geometries, labels_dict)
-
-        print(len(labels_dict.keys()))
 
     # Write result to database
     print(f"[{table_name}-z{zoom_level}] Writing data to database...")
-    write_data(table_name, simplified_geometries, labels_dict, zoom_level)
+    write_data(table_name, simplified_geometries, arc_labels_dict, zoom_level)
 
     # Force garbage collection
     gc.collect()
 
 
-# Checks if calculating arced labels is necessary for a given area type at a given zoom level
-def arced_labels_needed(area_type, zoom):
+# Checks if calculating arced labels is necessary for a given area type. If
+# a zoom level is provided, it is checked specifically for this zoom level
+def arced_labels_needed(area_type, zoom=None):
     # Check if label options provided
     if JSON_KEY_GROUP_TYPE_LABELS not in area_type: return False
 
@@ -212,11 +214,14 @@ def arced_labels_needed(area_type, zoom):
     zoom_min = label_options[JSON_KEY_GROUP_TYPE_LABELS_ZOOM_MIN]
     zoom_max = label_options[JSON_KEY_GROUP_TYPE_LABELS_ZOOM_MAX]
 
-    # Check if labels should be arced and for zoom levels
-    return arced and ((zoom >= zoom_min) and (zoom < zoom_max))
+    # Check if labels are required
+    if zoom is None:
+        return arced
+    else:
+        return arced and ((zoom >= zoom_min) and (zoom < zoom_max))
 
 
-def write_data(table_name, geometries, labels_dict, zoom):
+def write_data(table_name, geometries, arc_labels_dict, zoom):
     global database
 
     start_time = time.perf_counter()
@@ -232,16 +237,13 @@ def write_data(table_name, geometries, labels_dict, zoom):
         }
         # Stringify GeoJSON in a compact way
         geo_json = json.dumps(geometry, separators=(',', ':'))
-        # Check if there is a label available for the current geometry
-        label_obj = labels_dict[id] if id in labels_dict else None
 
-        # Check if label obj is an ArcLabel
-        if isinstance(label_obj, ArcLabel):
-            # ArcLabel
-            label = label_obj
+        # Check if there is a label available for the current geometry
+        if id in arc_labels_dict:
+            label_obj = arc_labels_dict[id]
+            label = label_obj if isinstance(label_obj, ArcLabel) else ArcLabel(label_obj)
         else:
-            # Normal label (set text and remaining ArcLabel properties to default values)
-            label = ArcLabel(label_obj)
+            label = ArcLabel()
 
         query_tuple = (
             id, geo_json, zoom, geo_json, label.text, label.center, label.start_angle, label.end_angle,

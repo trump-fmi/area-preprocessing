@@ -10,11 +10,11 @@ class Labelizer:
     def __init__(self):
         self.output_dic = {}
 
-    def labeling(self, geometries, labels):
+    def labeling(self, geometries, label_names_dict):
 
         for geoIndex, geometry in geometries.items():
 
-            if not geoIndex in labels:
+            if not geoIndex in label_names_dict:
                 continue
 
             outer_coordinates = []
@@ -28,7 +28,7 @@ class Labelizer:
                 if len(geometry['coordinates']) > 1:
                     inner_coordinates = geometry['coordinates'][1:]
 
-                self.blackbox(geoIndex, outer_coordinates, inner_coordinates, labels[geoIndex])
+                self.blackbox(geoIndex, outer_coordinates, inner_coordinates, label_names_dict[geoIndex])
 
                 # Geometry is a multi polygon
             elif geometry['type'] == 'MultiPolygon':
@@ -45,7 +45,7 @@ class Labelizer:
                 if len(current) > 1:
                     inner_coordinates = current[1:]
 
-                self.blackbox(geoIndex, outer_coordinates, inner_coordinates, labels[geoIndex])
+                self.blackbox(geoIndex, outer_coordinates, inner_coordinates, label_names_dict[geoIndex])
 
             else:
                 print(f"Other geometry: {geometry['type']}")
