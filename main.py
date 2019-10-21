@@ -83,8 +83,8 @@ ARC_LABELIZER = Labelizer()
 
 # Simplification algorithm to use
 # SIMPLIFICATION = BlackBoxSimplification()
-SIMPLIFICATION = NoSimplification()
-# SIMPLIFICATION = BlackboxSimplificationTest()
+# SIMPLIFICATION = NoSimplification()
+SIMPLIFICATION = BlackboxSimplificationTest()
 
 # Number of geometries to write within one database query
 WRITE_BATCH_SIZE = 4000
