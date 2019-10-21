@@ -196,7 +196,7 @@ def process_for_zoom_level(area_type, geometries_dict, arc_labels_dict, table_na
 
     # Write result to database
     print(f"[{table_name}-z{zoom_level}] Writing data to database...")
-    write_data(table_name, simplified_geometries, arc_labels_dict, zoom_level)
+    write_data(table_name, area_type, simplified_geometries, arc_labels_dict, zoom_level)
 
     # Force garbage collection
     gc.collect()
@@ -221,7 +221,7 @@ def arced_labels_needed(area_type, zoom=None):
         return arced and ((zoom >= zoom_min) and (zoom < zoom_max))
 
 
-def write_data(table_name, geometries, arc_labels_dict, zoom):
+def write_data(table_name, area_type, geometries, arc_labels_dict, zoom):
     global database
 
     start_time = time.perf_counter()
@@ -238,11 +238,15 @@ def write_data(table_name, geometries, arc_labels_dict, zoom):
         # Stringify GeoJSON in a compact way
         geo_json = json.dumps(geometry, separators=(',', ':'))
 
-        # Check if there is a label available for the current geometry
-        if id in arc_labels_dict:
+        # Check if labels are required and there is one for the current geometry
+        if arced_labels_needed(area_type, zoom) and (id in arc_labels_dict):
+            # ArcLabel
             label_obj = arc_labels_dict[id]
+
+            # Other label (if available)
             label = label_obj if isinstance(label_obj, ArcLabel) else ArcLabel(label_obj)
         else:
+            # No label
             label = ArcLabel()
 
         query_tuple = (
