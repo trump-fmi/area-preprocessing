@@ -80,8 +80,8 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 
 # Simplification algorithm to use
 # SIMPLIFICATION = BlackBoxSimplification()
-#SIMPLIFICATION = NoSimplification()
-SIMPLIFICATION = BlackboxSimplificationTest()
+SIMPLIFICATION = NoSimplification()
+# SIMPLIFICATION = BlackboxSimplificationTest()
 
 # Number of geometries to write within one database query
 WRITE_BATCH_SIZE = 4000
@@ -91,7 +91,6 @@ database = None
 
 LOG_FILE = open("main_geom_log_before.txt", "a+")
 LOG_FILE_AFTER = open("main_geom_log_after.txt", "a+")
-
 
 
 def extract_area_type(area_type):
