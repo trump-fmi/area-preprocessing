@@ -1,8 +1,6 @@
 from subprocess import run, PIPE
-from sys import exit
 from Simplification import Simplification
-import json
-import math
+import gc
 import numpy as np
 import copy
 
@@ -18,11 +16,10 @@ MULTILINESTRING = 4
 class BlackboxSimplificationTest(Simplification):
 
     def __init__(self):
-        self.newDict = {}
+        self.xfree_output = None
 
     def simplify(self, constraint_points, geometries, zoom):
-
-        self.newDict = copy.deepcopy(geometries)
+        new_dict = copy.deepcopy(geometries)
         mapping = []
         # CONSTRAINT POINTS
         string_input = ""
@@ -98,25 +95,25 @@ class BlackboxSimplificationTest(Simplification):
 
         index = 0
         for geoIndex, geometry in geometries.items():
-            self.newDict[geoIndex]['coordinates'] = coords[index]
+            new_dict[geoIndex]['coordinates'] = coords[index]
             index += 1
 
-        return self.newDict
+        return new_dict
 
     def blackbox(self, xfree_input, zoom):
         reassemble = []
         arr = []
 
         # XFREE BLACKBOX
-        xfree_process = run(BLACKBOX_PATH, stdout=PIPE, input=xfree_input, encoding='ascii')
-        xfree_output = xfree_process.stdout
+        if self.xfree_output is None:
+            xfree_process = run(BLACKBOX_PATH, stdout=PIPE, input=xfree_input, encoding='ascii')
+            self.xfree_output = xfree_process.stdout
 
         # XFREE OUTPUT
-        constraints = xfree_output.split("\n")[0]
-        result = xfree_output.split("\n")[1:-1]
+        constraints = self.xfree_output.split("\n")[0]
+        result = self.xfree_output.split("\n")[1:-1]
 
         # ARRAY FOR  LATER REASSEMBLY
-
         for entry in result[int(result[0]) + 2:]:
             line = list(map(int, entry.split(" ")[:-1]))
             new_arr = np.asarray(np.array_split(line, len(line) / 2)).tolist()
@@ -166,3 +163,7 @@ class BlackboxSimplificationTest(Simplification):
 
             geometries.append(geometry)
         return geometries
+
+    def clear(self):
+        self.xfree_output = None
+        gc.collect()

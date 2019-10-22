@@ -7,3 +7,7 @@ class Simplification:
     def simplify(self, constraint_points, geometries, zoom):
         # Output: One simplified version of each border
         pass
+
+    @abstractmethod
+    def clear(self):
+        pass

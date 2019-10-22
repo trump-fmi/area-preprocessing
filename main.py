@@ -150,6 +150,9 @@ def extract_area_type(area_type):
     pool.close()
     pool.join()
 
+    # Reset simplification
+    SIMPLIFICATION.clear()
+
     elapsed_time = time.perf_counter() - start_time
     print(f"[{table_name}] Processing finished. Took {elapsed_time:0.4} seconds")
 
