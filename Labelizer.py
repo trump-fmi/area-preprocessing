@@ -87,10 +87,10 @@ class Labelizer:
         result = label_output.split()
 
         if len(result) < 6:
-            print("Fail :-(")
+            print(f"Fail for Poly with {len(inner)} holes :-(")
             return
 
-        print("Subber")
+        print(f"Subber with {len(inner)} holes")
 
         center = [float(result[0]), float(result[1])]
         self.output_dic[geoIndex] = ArcLabel(label_name, center, float(result[4]), float(result[5]), float(result[2]),
