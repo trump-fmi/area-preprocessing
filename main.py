@@ -265,6 +265,7 @@ def write_data(table_name, area_type, geometries, arc_labels_dict, zoom):
               f'with batch size {WRITE_BATCH_SIZE}')
     except Exception as e:
         print(f"write_data method failed with {e}")
+        exit(1)
 
 def prepare_table(database, table_name):
     for query in TABLE_PRE_QUERIES:
