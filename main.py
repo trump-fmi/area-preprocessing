@@ -229,41 +229,42 @@ def write_data(table_name, area_type, geometries, arc_labels_dict, zoom):
 
     start_time = time.perf_counter()
     query_tuples = []
-
-    for id, geometry in list(geometries.items()):
-        # Extend geometry for SRID
-        geometry['crs'] = {
-            'type': 'name',
-            'properties': {
-                'name': OUTPUT_PROJECTION
+    try:
+        for id, geometry in list(geometries.items()):
+            # Extend geometry for SRID
+            geometry['crs'] = {
+                'type': 'name',
+                'properties': {
+                    'name': OUTPUT_PROJECTION
+                }
             }
-        }
-        # Stringify GeoJSON in a compact way
-        geo_json = json.dumps(geometry, separators=(',', ':'))
+            # Stringify GeoJSON in a compact way
+            geo_json = json.dumps(geometry, separators=(',', ':'))
 
-        # Check if labels are required and there is one for the current geometry
-        if arced_labels_needed(area_type, zoom) and (id in arc_labels_dict):
-            # ArcLabel
-            label_obj = arc_labels_dict[id]
+            # Check if labels are required and there is one for the current geometry
+            if arced_labels_needed(area_type, zoom) and (id in arc_labels_dict):
+                # ArcLabel
+                label_obj = arc_labels_dict[id]
 
-            # Other label (if available)
-            label = label_obj if isinstance(label_obj, ArcLabel) else ArcLabel(label_obj)
-        else:
-            # No label
-            label = ArcLabel()
+                # Other label (if available)
+                label = label_obj if isinstance(label_obj, ArcLabel) else ArcLabel(label_obj)
+            else:
+                # No label
+                label = ArcLabel()
 
-        query_tuple = (
-            id, geo_json, zoom, geo_json, label.text, label.center, label.start_angle, label.end_angle,
-            label.inner_radius,
-            label.outer_radius)
-        query_tuples.append(query_tuple)
+            query_tuple = (
+                id, geo_json, zoom, geo_json, label.text, label.center, label.start_angle, label.end_angle,
+                label.inner_radius,
+                label.outer_radius)
+            query_tuples.append(query_tuple)
 
-    database.write_query(TABLE_INSERT_QUERY.format(table_name), template=TABLE_INSERT_TEMPLATE,
-                         query_tuples=query_tuples, page_size=WRITE_BATCH_SIZE)
-    elapsed_time = time.perf_counter() - start_time
-    print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed_time:0.4} seconds '
-          f'with batch size {WRITE_BATCH_SIZE}')
-
+        database.write_query(TABLE_INSERT_QUERY.format(table_name), template=TABLE_INSERT_TEMPLATE,
+                             query_tuples=query_tuples, page_size=WRITE_BATCH_SIZE)
+        elapsed_time = time.perf_counter() - start_time
+        print(f'[{table_name}-z{zoom}] Wrote {len(query_tuples)} tuples to DB in {elapsed_time:0.4} seconds '
+              f'with batch size {WRITE_BATCH_SIZE}')
+    except Exception as e:
+        print(f"write_data method failed with {e}")
 
 def prepare_table(database, table_name):
     for query in TABLE_PRE_QUERIES:
