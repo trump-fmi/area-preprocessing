@@ -17,8 +17,10 @@ class BlackboxSimplificationTest(Simplification):
 
     def __init__(self):
         self.xfree_output = None
+        self.loop_index = 0
 
     def simplify(self, constraint_points, geometries, zoom):
+        self.loop_index = self.loop_index + 1
         new_dict = copy.deepcopy(geometries)
         mapping = []
         # CONSTRAINT POINTS
@@ -103,7 +105,8 @@ class BlackboxSimplificationTest(Simplification):
     def blackbox(self, xfree_input, zoom):
         reassemble = []
         arr = []
-
+        
+        print(self.xfree_output == None)
         # XFREE BLACKBOX
         if self.xfree_output is None:
             xfree_process = run(BLACKBOX_PATH, stdout=PIPE, input=xfree_input, encoding='ascii')
@@ -141,7 +144,8 @@ class BlackboxSimplificationTest(Simplification):
             arr.append(new_arr)
 
         final_result = self.recreate(arr, reassemble)
-
+        
+        print(self.loop_index)
         return final_result
 
     def recreate(self, lines, mapping):
@@ -166,4 +170,5 @@ class BlackboxSimplificationTest(Simplification):
 
     def clear(self):
         self.xfree_output = None
+        self.loop_index = 0
         gc.collect()
