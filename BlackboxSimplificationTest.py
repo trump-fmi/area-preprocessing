@@ -97,9 +97,7 @@ class BlackboxSimplificationTest(Simplification):
                 coords.append(multipoly)
 
         index = 0
-        for geoIndex, geometry in geometries.items():
-            if not geometry['type'] == 'Polygon' or not geometry['type'] == 'MultiPolygon' or not geometry['type'] == 'LineString' or not geometry['type'] == 'MultiLineString' :
-                continue
+        for geoIndex, geometry in geometries.items():            
             new_dict[geoIndex]['coordinates'] = coords[index]
             index += 1
 
