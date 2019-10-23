@@ -3,6 +3,7 @@ from Simplification import Simplification
 import gc
 import numpy as np
 import copy
+import math
 
 BLACKBOX_PATH = "../topo_simplify/XFREE/build/make_x_free"
 BLACKBOX_SIMPL_PATH = "../topo_simplify/CTR/build/topo_simplify"
