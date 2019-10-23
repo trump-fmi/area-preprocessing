@@ -97,6 +97,8 @@ class BlackboxSimplificationTest(Simplification):
 
         index = 0
         for geoIndex, geometry in geometries.items():
+            if not geometry['type'] == 'Polygon' or not geometry['type'] == 'MultiPolygon' or not geometry['type'] == 'LineString' or not geometry['type'] == 'MultiLineString' :
+                continue
             new_dict[geoIndex]['coordinates'] = coords[index]
             index += 1
 
