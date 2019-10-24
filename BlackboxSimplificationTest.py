@@ -157,14 +157,30 @@ class BlackboxSimplificationTest(Simplification):
             for combination in entry:
                 if combination[1] == 1:
                     if len(geometry) >= 1 and geometry[-1] == lines[combination[0]][-1]:
-                        geometry.extend(lines[combination[0]][-2::-1])
+                        temp = lines[combination[0]][-2::-1]
+                        for point in temp:
+                            if not geometry[-1] == point:
+                                geometry.append(point)
+                        #geometry.extend(lines[combination[0]][-2::-1])
                     else:
-                        geometry.extend(lines[combination[0]][::-1])
+                        temp = lines[combination[0]][::-1]
+                        for point in temp:
+                            if len(geometry) == 0 or not geometry[-1] == point:
+                                geometry.append(point)
+                        #geometry.extend(lines[combination[0]][::-1])
                 elif combination[1] == 0:
                     if len(geometry) >= 1 and geometry[-1] == lines[combination[0]][0]:
-                        geometry.extend(lines[combination[0]][1:])
+                        temp = lines[combination[0]][1:]
+                        for point in temp:
+                            if not geometry[-1] == point:
+                                geometry.append(point)
+                        #geometry.extend(lines[combination[0]][1:])
                     else:
-                        geometry.extend(lines[combination[0]])
+                        temp = lines[combination[0]]
+                        for point in temp:
+                            if len(geometry) == 0 or not geometry[-1] == point:
+                                geometry.append(point)
+                        #geometry.extend(lines[combination[0]])
 
             geometries.append(geometry)
         return geometries
