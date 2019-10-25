@@ -82,9 +82,8 @@ ZOOM_RANGE = range(19, -1, -1)  # OSM default: range(0,19)
 ARC_LABELIZER = Labelizer()
 
 # Simplification algorithm to use
-# SIMPLIFICATION = BlackBoxSimplification()
 # SIMPLIFICATION = NoSimplification()
-SIMPLIFICATION = BlackboxSimplificationTest()
+# SIMPLIFICATION = BlackboxSimplificationTest()
 
 # Number of geometries to write within one database query
 WRITE_BATCH_SIZE = 4000
