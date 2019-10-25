@@ -140,6 +140,9 @@ class BlackboxSimplificationTest(Simplification):
         # OUTPUT LINES AS [[x1,y1],[x2,y2],...] #TODO: ONLY WORKS FOR SINGLE EPSILON ATM, EASY TO ADAPT
 
         for entry in ctr_result[2:]:
+            if entry == "":
+                arr.append([])
+                continue
             line = list(map(float, entry.split(" ")[:-1]))
             new_arr = np.asarray(np.array_split(line, len(line) / 2)).tolist()
             arr.append(new_arr)
@@ -155,6 +158,8 @@ class BlackboxSimplificationTest(Simplification):
             # first = True
             geometry = []
             for combination in entry:
+                if len(lines[combination[0]]) == 0:
+                    continue
                 if combination[1] == 1:
                     if len(geometry) >= 1 and geometry[-1] == lines[combination[0]][-1]:
                         temp = lines[combination[0]][-2::-1]
