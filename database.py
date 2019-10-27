@@ -34,7 +34,7 @@ class DatabaseConnection:
                 self.write_query(query, template, query_tuples, page_size, retry)
             else:
                 print(f"Query '{query}' failed with exception: {e}. Aborting.")
-                exit(-1)
+                # exit(-1)
         finally:
             self.close_cursor(cursor)
 
