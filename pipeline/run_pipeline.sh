@@ -7,7 +7,7 @@
 # ********************************
 
 # Increase node RAM size (needed for osmtogeojson)
-export NODE_OPTIONS=--max_old_space_size=16384
+export NODE_OPTIONS=--max_old_space_size=65536
 
 # Switch into pipeline directory
 cd "${0%/*}"
