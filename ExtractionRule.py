@@ -48,7 +48,8 @@ class ExtractionRule:
         # Create threads to extract data with pipeline
         for filter_condition in self.filter_conditions_list:
             count += 1
-            pool.apply_async(self.extract_with_pipeline, args=[f"{self.table_name}-{count}", hashed_o5m_path, filter_condition])
+            # pool.apply_async(self.extract_with_pipeline, args=[f"{self.table_name}-{count}", hashed_o5m_path, filter_condition])
+            self.extract_with_pipeline(f"{self.table_name}-{count}", hashed_o5m_path, filter_condition)
 
         # Wait for all threads to finish
         pool.close()
